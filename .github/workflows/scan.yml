@@ -1,0 +1,55 @@
+name: UK Deals Scan
+
+on:
+  schedule:
+    # Off-peak minutes (:17, :47) to dodge the :00/:30 congestion that
+    # causes GitHub's 10-30 min cron delays. Runs ~hourly, daytime UK.
+    - cron: "17,47 7-22 * * *"
+  workflow_dispatch:        # lets you run a scan on-demand from the Actions tab
+
+# Keep only one scan running at a time.
+concurrency:
+  group: deals-scan
+  cancel-in-progress: false
+
+permissions:
+  contents: write           # allows the keep-alive commit step
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run scan
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          ALERT_CHAT_ID: ${{ secrets.ALERT_CHAT_ID }}
+        run: python main.py
+
+      # GitHub disables scheduled workflows after 60 days of repo inactivity.
+      # This harmless monthly touch keeps the schedule alive.
+      - name: Keep-alive (1st of month only)
+        if: ${{ github.event_name == 'schedule' }}
+        run: |
+          if [ "$(date -u +%d)" = "01" ]; then
+            git config user.name "deals-bot"
+            git config user.email "deals-bot@users.noreply.github.com"
+            date -u > .keepalive
+            git add .keepalive
+            git commit -m "chore: keep-alive" || exit 0
+            git push || true
+          fi
