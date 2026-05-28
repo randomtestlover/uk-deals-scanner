@@ -86,16 +86,25 @@ class DB:
         ).execute()
 
     def history_stats(self, deal: RawDeal) -> tuple[Optional[float], Optional[float]]:
-        """Return (hist_low, hist_avg) from stored price history, or (None, None)."""
-        ident_col, ident_val = ("asin", deal.asin) if deal.asin else ("url", deal.url)
-        res = (
-            self.client.table("price_history")
-            .select("price")
-            .eq(ident_col, ident_val)
-            .order("captured_at", desc=True)
-            .limit(200)
-            .execute()
-        )
+        """Return (hist_low, hist_avg) from stored price history, or (None, None).
+
+        History is keyed on ASIN only. Raw product URLs contain query strings
+        (?, &, =) that break PostgREST's URL path, so we never filter by URL.
+        When there is no ASIN, we simply report no history yet (scoring then
+        falls back to discount depth, which is the intended behaviour)."""
+        if not deal.asin:
+            return None, None
+        try:
+            res = (
+                self.client.table("price_history")
+                .select("price")
+                .eq("asin", deal.asin)
+                .order("captured_at", desc=True)
+                .limit(200)
+                .execute()
+            )
+        except Exception:
+            return None, None
         prices = [float(r["price"]) for r in (res.data or []) if r.get("price")]
         if len(prices) < 3:               # not enough signal yet
             return None, None
