@@ -1,0 +1,10 @@
+name = "uk-deals-redirect"
+main = "worker.js"
+compatibility_date = "2025-01-01"
+
+# After creating the KV namespace with:
+#   wrangler kv namespace create CLICKS
+# paste the returned id below.
+[[kv_namespaces]]
+binding = "CLICKS"
+id = "PASTE_YOUR_KV_NAMESPACE_ID_HERE"
