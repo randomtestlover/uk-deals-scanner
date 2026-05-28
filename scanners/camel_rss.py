@@ -20,26 +20,43 @@ from selectolax.parser import HTMLParser
 from core.models import RawDeal
 from scanners.base import BaseScanner, parse_price
 
-# CCC summaries often read like:
-#   "Lowest new price: £49.99 (was £79.99)"  — order can vary.
-_WAS_RE = re.compile(r"was\s*£\s?([0-9][0-9,]*\.?[0-9]{0,2})", re.IGNORECASE)
+# CCC UK RSS entries read exactly like:
+#   "<title> - down 13.09% (£1.63) to £10.82 from £12.45"
+# So we parse the explicit % drop, the 'to' (current) price, and the
+# 'from' (was) price directly, which is far more reliable than guessing.
+_PCT_RE = re.compile(r"down\s+([0-9]+(?:\.[0-9]+)?)\s*%", re.IGNORECASE)
+_TO_RE = re.compile(r"\bto\s*£\s?([0-9][0-9,]*(?:\.[0-9]{1,2})?)", re.IGNORECASE)
+_FROM_RE = re.compile(r"\bfrom\s*£\s?([0-9][0-9,]*(?:\.[0-9]{1,2})?)", re.IGNORECASE)
 
 
-def _extract_prices(text: str) -> tuple[float | None, float | None]:
-    """Return (current, reference). Current = first £ found; reference =
-    the 'was' price if present, else None."""
-    current = parse_price(text)
-    ref = None
-    m = _WAS_RE.search(text or "")
-    if m:
-        try:
-            ref = float(m.group(1).replace(",", ""))
-        except ValueError:
-            ref = None
-    # If both found but ordering put the higher one first, normalise:
+def _money(m) -> float | None:
+    if not m:
+        return None
+    try:
+        return float(m.group(1).replace(",", ""))
+    except ValueError:
+        return None
+
+
+def _extract_prices(text: str) -> tuple[float | None, float | None, float | None]:
+    """Parse CCC's '... down N% (£x) to £CURRENT from £WAS' format.
+    Returns (current, reference, pct_off). Falls back gracefully:
+    if 'to'/'from' aren't found, uses the first £ as current."""
+    text = text or ""
+    pct = _money(_PCT_RE.search(text)) if _PCT_RE.search(text) else None
+
+    current = _money(_TO_RE.search(text))
+    ref = _money(_FROM_RE.search(text))
+
+    # Fallback: no explicit 'to' price — take the first £ amount on the line.
+    if current is None:
+        current = parse_price(text)
+
+    # Normalise if the two prices came out swapped.
     if current and ref and ref < current:
         current, ref = ref, current
-    return current, ref
+
+    return current, ref, pct
 
 
 class CamelScanner(BaseScanner):
@@ -65,22 +82,36 @@ class CamelScanner(BaseScanner):
         # feedparser fetches internally; pass our UA for politeness.
         parsed = feedparser.parse(feed_url, agent=self.user_agent)
         for entry in parsed.entries:
-            title = getattr(entry, "title", "") or ""
+            raw_title = getattr(entry, "title", "") or ""
             link = getattr(entry, "link", "") or ""
             summary = getattr(entry, "summary", "") or ""
-            if not title or not link:
+            if not raw_title or not link:
                 continue
-            if not self._matches_keywords(title):
-                continue
-            current, ref = _extract_prices(f"{title} {summary}")
+
+            blob = f"{raw_title} {summary}"
+            current, ref, pct = _extract_prices(blob)
             if not current:
                 continue
+
+            # The product name is the part of the title before " - down ...".
+            clean_title = re.split(r"\s+-\s+down\s", raw_title, flags=re.IGNORECASE)[0].strip()
+            if not clean_title:
+                clean_title = raw_title.strip()
+
+            if not self._matches_keywords(clean_title):
+                continue
+
+            # If CCC gave a % drop but no explicit 'from' price, derive the
+            # reference price from the % so discount filtering still works.
+            if ref is None and pct and pct > 0 and pct < 100:
+                ref = round(current / (1 - pct / 100.0), 2)
+
             try:
                 deals.append(
                     RawDeal(
                         source=f"ccc:{self.category}",
                         category=self.category,
-                        title=title,
+                        title=clean_title[:400],
                         url=link,
                         current_price=current,
                         ref_price=ref,
