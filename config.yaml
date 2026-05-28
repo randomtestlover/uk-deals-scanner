@@ -19,7 +19,7 @@ posting:
 
 # --- Amazon affiliate ---------------------------------------
 affiliate:
-  amazon_tag: "yourtag-21"  # <-- PUT YOUR AMAZON ASSOCIATES TAG HERE
+  amazon_tag: "sturnusek0d-21"  # <-- PUT YOUR AMAZON ASSOCIATES TAG HERE
   # Disclosure appended to every post (UK ASA + Amazon compliance).
   disclosure: "🔖 Affiliate links — we may earn a commission at no extra cost to you."
 
@@ -55,7 +55,7 @@ categories:
 # Per-category channels are optional; leave blank ("") to send only to main.
 # Use the numeric chat ID (e.g. -1001234567890) or @channelusername.
 channels:
-  main_channel: "@your_main_deals_channel"
+  main_channel: "-1003939145947"
   per_category:
     tech: ""
     gaming: ""
