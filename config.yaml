@@ -6,9 +6,10 @@
 
 # --- Deal filtering -----------------------------------------
 # A deal is only posted if it clears BOTH of these thresholds.
+# These are LOOSENED for first-run testing; raise them later for quality.
 filters:
-  min_discount_pct: 30      # ignore anything discounted less than this
-  min_deal_score: 65        # 0-100 quality score (see core/dealscore.py)
+  min_discount_pct: 15      # ignore anything discounted less than this
+  min_deal_score: 8        # 0-100 quality score (see core/dealscore.py)
   require_in_stock: true    # skip deals that look out of stock
 
 # --- Posting behaviour --------------------------------------
@@ -24,31 +25,28 @@ affiliate:
   disclosure: "🔖 Affiliate links — we may earn a commission at no extra cost to you."
 
 # --- Categories & their CamelCamelCamel UK source feeds -----
-# CCC exposes free RSS feeds. 'top_drops' / 'recent_drops' are
-# site-wide; category feeds use CCC's category IDs.
-# Each category can map to its own Telegram channel (see channels).
+# CCC's top_drops feed mixes all product types. For the first run we use a
+# single 'deals' category with NO keyword filter so deals actually flow.
+# Once posting is confirmed, you can re-introduce per-category keyword
+# filtering (examples kept below, commented, for later).
 categories:
-  tech:
-    enabled: true
-    feeds:
-      - "https://uk.camelcamelcamel.com/top_drops/feed?bp=1"   # biggest price drops
-      - "https://uk.camelcamelcamel.com/recent/feed?bp=1"      # recent drops
-    keywords_any: ["laptop", "ssd", "monitor", "tv", "headphone", "ssd", "gpu", "tablet", "phone", "router", "soundbar"]
-  gaming:
+  deals:
     enabled: true
     feeds:
       - "https://uk.camelcamelcamel.com/top_drops/feed?bp=1"
-    keywords_any: ["playstation", "ps5", "xbox", "nintendo", "switch", "game", "controller", "steam"]
-  baby:
-    enabled: true
-    feeds:
-      - "https://uk.camelcamelcamel.com/top_drops/feed?bp=1"
-    keywords_any: ["nappy", "nappies", "pram", "pushchair", "cot", "baby", "infant", "toddler"]
-  home:
-    enabled: true
-    feeds:
-      - "https://uk.camelcamelcamel.com/top_drops/feed?bp=1"
-    keywords_any: ["vacuum", "airfryer", "air fryer", "kettle", "coffee", "dyson", "mattress", "bedding"]
+    keywords_any: []   # empty = match everything
+
+  # --- LATER: tighten into categories like this (set enabled: true) ---
+  # tech:
+  #   enabled: false
+  #   feeds:
+  #     - "https://uk.camelcamelcamel.com/top_drops/feed?bp=1"
+  #   keywords_any: ["laptop","ssd","monitor","tv","headphone","gpu","tablet","router","soundbar"]
+  # gaming:
+  #   enabled: false
+  #   feeds:
+  #     - "https://uk.camelcamelcamel.com/top_drops/feed?bp=1"
+  #   keywords_any: ["playstation","ps5","xbox","nintendo","switch","controller"]
 
 # --- Telegram channels --------------------------------------
 # main_channel receives EVERYTHING (your public funnel — keep it PUBLIC).
@@ -57,10 +55,7 @@ categories:
 channels:
   main_channel: "-1003939145947"
   per_category:
-    tech: ""
-    gaming: ""
-    baby: ""
-    home: ""
+    deals: ""
 
 # --- Click tracking (Cloudflare Worker redirect) ------------
 # Optional. If set, outgoing links route through your Worker so you
