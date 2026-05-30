@@ -1,20 +1,21 @@
-"""Supabase/Postgres data layer.
+"""Postgres data layer (self-hosted, via psycopg).
 
-Run the SQL in SCHEMA_SQL once in the Supabase SQL editor (SETUP.md walks
-through this). All reads/writes go through this module so the rest of the
-code never touches the DB client directly.
+All reads/writes go through this module so the rest of the code never
+touches the DB client directly. Call DB.init_schema() once on startup to
+create the tables if they don't exist (idempotent).
 """
 
 from __future__ import annotations
 
 from typing import Optional
 
-from supabase import Client, create_client
+import psycopg
+from psycopg.rows import dict_row
 
 from .models import RawDeal, ScoredDeal
 
 # ---------------------------------------------------------------------------
-# One-time schema. Paste into Supabase -> SQL Editor -> Run.
+# Schema. Created automatically by init_schema() on first run (idempotent).
 # ---------------------------------------------------------------------------
 SCHEMA_SQL = """
 create table if not exists deals (
@@ -53,7 +54,6 @@ create table if not exists posts (
     posted_at   timestamptz not null default now()
 );
 
--- Premium-ready; unused by the MVP but architected now.
 create table if not exists subscribers (
     id          bigint generated always as identity primary key,
     tg_user_id  bigint unique not null,
@@ -65,76 +65,93 @@ create table if not exists subscribers (
 
 
 class DB:
-    def __init__(self, url: str, service_key: str):
-        self.client: Client = create_client(url, service_key)
+    def __init__(self, database_url: str):
+        # autocommit so each statement persists immediately; matches the
+        # previous fire-and-forget Supabase behaviour.
+        self.conn = psycopg.connect(database_url, autocommit=True, row_factory=dict_row)
+
+    # --- schema ---------------------------------------------------------
+    def init_schema(self) -> None:
+        """Create tables/indexes if absent. Safe to call every run."""
+        with self.conn.cursor() as cur:
+            cur.execute(SCHEMA_SQL)
 
     # --- dedupe ---------------------------------------------------------
     def already_posted(self, dedupe_hash: str) -> bool:
-        res = (
-            self.client.table("deals")
-            .select("id")
-            .eq("dedupe_hash", dedupe_hash)
-            .limit(1)
-            .execute()
-        )
-        return bool(res.data)
+        with self.conn.cursor() as cur:
+            cur.execute(
+                "select 1 from deals where dedupe_hash = %s limit 1",
+                (dedupe_hash,),
+            )
+            return cur.fetchone() is not None
 
     # --- price history --------------------------------------------------
     def record_price(self, deal: RawDeal) -> None:
-        self.client.table("price_history").insert(
-            {"asin": deal.asin, "url": deal.url, "price": deal.current_price}
-        ).execute()
+        try:
+            with self.conn.cursor() as cur:
+                cur.execute(
+                    "insert into price_history (asin, url, price) values (%s, %s, %s)",
+                    (deal.asin, deal.url, deal.current_price),
+                )
+        except Exception:
+            # Recording history is best-effort; never abort a scan.
+            pass
 
     def history_stats(self, deal: RawDeal) -> tuple[Optional[float], Optional[float]]:
         """Return (hist_low, hist_avg) from stored price history, or (None, None).
-
-        History is keyed on ASIN only. Raw product URLs contain query strings
-        (?, &, =) that break PostgREST's URL path, so we never filter by URL.
-        When there is no ASIN, we simply report no history yet (scoring then
-        falls back to discount depth, which is the intended behaviour)."""
+        Keyed on ASIN only; products without an ASIN report no history yet."""
         if not deal.asin:
             return None, None
         try:
-            res = (
-                self.client.table("price_history")
-                .select("price")
-                .eq("asin", deal.asin)
-                .order("captured_at", desc=True)
-                .limit(200)
-                .execute()
-            )
+            with self.conn.cursor() as cur:
+                cur.execute(
+                    "select price from price_history where asin = %s "
+                    "order by captured_at desc limit 200",
+                    (deal.asin,),
+                )
+                rows = cur.fetchall()
         except Exception:
             return None, None
-        prices = [float(r["price"]) for r in (res.data or []) if r.get("price")]
-        if len(prices) < 3:               # not enough signal yet
+        prices = [float(r["price"]) for r in (rows or []) if r.get("price") is not None]
+        if len(prices) < 3:  # not enough signal yet
             return None, None
         return min(prices), sum(prices) / len(prices)
 
     # --- persistence ----------------------------------------------------
     def save_deal(self, deal: ScoredDeal) -> Optional[int]:
-        res = (
-            self.client.table("deals")
-            .insert(
-                {
-                    "dedupe_hash": deal.dedupe_hash,
-                    "source": deal.source,
-                    "category": deal.category,
-                    "title": deal.title,
-                    "url": deal.url,
-                    "affiliate_url": deal.affiliate_url,
-                    "asin": deal.asin,
-                    "current_price": deal.current_price,
-                    "ref_price": deal.ref_price,
-                    "pct_off": deal.pct_off,
-                    "deal_score": deal.deal_score,
-                    "in_stock": deal.in_stock,
-                }
+        with self.conn.cursor() as cur:
+            cur.execute(
+                "insert into deals (dedupe_hash, source, category, title, url, "
+                "affiliate_url, asin, current_price, ref_price, pct_off, deal_score, "
+                "in_stock) values (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) "
+                "on conflict (dedupe_hash) do nothing returning id",
+                (
+                    deal.dedupe_hash,
+                    deal.source,
+                    deal.category,
+                    deal.title,
+                    deal.url,
+                    deal.affiliate_url,
+                    deal.asin,
+                    deal.current_price,
+                    deal.ref_price,
+                    deal.pct_off,
+                    deal.deal_score,
+                    deal.in_stock,
+                ),
             )
-            .execute()
-        )
-        return res.data[0]["id"] if res.data else None
+            row = cur.fetchone()
+            return row["id"] if row else None
 
     def record_post(self, deal_id: int, channel: str, message_id: Optional[int]) -> None:
-        self.client.table("posts").insert(
-            {"deal_id": deal_id, "channel": channel, "message_id": message_id}
-        ).execute()
+        with self.conn.cursor() as cur:
+            cur.execute(
+                "insert into posts (deal_id, channel, message_id) values (%s, %s, %s)",
+                (deal_id, channel, message_id),
+            )
+
+    def close(self) -> None:
+        try:
+            self.conn.close()
+        except Exception:
+            pass
