@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>YourDealsUK — the UK's sharpest deal radar</title>
+<meta name="description" content="YourDealsUK scans UK retailers around the clock and surfaces only the genuinely good discounts — scored, verified, and sent the moment they drop. Free deal alerts on Telegram." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,900&family=Spline+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#14110f;
+    --paper:#f4efe6;
+    --paper-2:#eae1d2;
+    --accent:#d6452b;       /* vermilion */
+    --accent-2:#1f6f5c;     /* deep green */
+    --gold:#c98a2b;
+    --line:#cdbfa8;
+    --shadow:18px 18px 0 rgba(20,17,15,.9);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Spline Sans',sans-serif;
+    line-height:1.6;
+    overflow-x:hidden;
+    background-image:
+      radial-gradient(circle at 1px 1px, rgba(20,17,15,.05) 1px, transparent 0);
+    background-size:22px 22px;
+  }
+  .wrap{max-width:1180px;margin:0 auto;padding:0 28px}
+
+  /* ---- nav ---- */
+  nav{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:26px 28px;max-width:1180px;margin:0 auto;
+    position:relative;z-index:10;
+  }
+  .logo{
+    font-family:'Fraunces',serif;font-weight:900;font-size:1.5rem;
+    letter-spacing:-.02em;display:flex;align-items:center;gap:10px;
+  }
+  .logo .dot{width:13px;height:13px;background:var(--accent);border-radius:50%;display:inline-block}
+  .nav-cta{
+    font-weight:600;font-size:.95rem;text-decoration:none;color:var(--ink);
+    border:2px solid var(--ink);padding:9px 20px;border-radius:40px;
+    transition:all .2s;background:var(--paper);
+  }
+  .nav-cta:hover{background:var(--ink);color:var(--paper)}
+
+  /* ---- hero ---- */
+  header{position:relative;padding:60px 0 90px}
+  .eyebrow{
+    display:inline-flex;align-items:center;gap:9px;
+    font-size:.78rem;font-weight:600;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--accent-2);margin-bottom:26px;
+  }
+  .eyebrow::before{content:"";width:30px;height:2px;background:var(--accent-2)}
+  h1{
+    font-family:'Fraunces',serif;font-weight:900;
+    font-size:clamp(2.9rem,8vw,6.2rem);line-height:.96;letter-spacing:-.03em;
+    max-width:13ch;margin-bottom:30px;
+  }
+  h1 em{font-style:italic;color:var(--accent)}
+  .lede{font-size:clamp(1.05rem,2vw,1.3rem);max-width:46ch;color:#473f37;margin-bottom:40px}
+  .cta-row{display:flex;gap:16px;flex-wrap:wrap;align-items:center}
+  .btn{
+    font-weight:600;font-size:1.02rem;text-decoration:none;
+    padding:16px 32px;border-radius:50px;transition:transform .15s, box-shadow .15s;
+    display:inline-flex;align-items:center;gap:10px;
+  }
+  .btn-primary{background:var(--accent);color:#fff;box-shadow:6px 6px 0 var(--ink)}
+  .btn-primary:hover{transform:translate(-2px,-2px);box-shadow:9px 9px 0 var(--ink)}
+  .btn-ghost{color:var(--ink);border:2px solid var(--line)}
+  .btn-ghost:hover{border-color:var(--ink)}
+
+  .hero-badge{
+    position:absolute;right:0;top:80px;
+    width:200px;height:200px;border-radius:50%;
+    background:var(--accent-2);color:var(--paper);
+    display:grid;place-content:center;text-align:center;
+    transform:rotate(-12deg);padding:24px;
+    font-family:'Fraunces',serif;
+    box-shadow:var(--shadow);
+  }
+  .hero-badge .big{font-size:2.6rem;font-weight:900;line-height:1}
+  .hero-badge .sm{font-size:.78rem;letter-spacing:.05em;margin-top:6px;font-family:'Spline Sans';font-weight:500}
+  @media(max-width:860px){.hero-badge{display:none}}
+
+  /* ---- ticker ---- */
+  .ticker{
+    border-top:2px solid var(--ink);border-bottom:2px solid var(--ink);
+    background:var(--ink);color:var(--paper);overflow:hidden;white-space:nowrap;
+    padding:14px 0;
+  }
+  .ticker-track{display:inline-block;animation:scroll 26s linear infinite}
+  .ticker-track span{font-family:'Fraunces',serif;font-weight:600;font-size:1.05rem;margin:0 26px}
+  .ticker-track .pct{color:var(--gold)}
+  @keyframes scroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+
+  /* ---- how ---- */
+  section{padding:90px 0}
+  .section-head{margin-bottom:56px;max-width:40ch}
+  .section-head h2{
+    font-family:'Fraunces',serif;font-weight:900;font-size:clamp(2rem,5vw,3.4rem);
+    letter-spacing:-.02em;line-height:1.02;margin-bottom:18px;
+  }
+  .section-head p{font-size:1.1rem;color:#473f37}
+
+  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border:2px solid var(--ink);background:var(--paper-2)}
+  .step{padding:38px 30px;border-right:2px solid var(--ink);position:relative}
+  .step:last-child{border-right:none}
+  .step .num{
+    font-family:'Fraunces',serif;font-weight:900;font-size:3.2rem;color:var(--accent);
+    line-height:1;margin-bottom:18px;display:block;
+  }
+  .step h3{font-family:'Fraunces',serif;font-size:1.35rem;font-weight:600;margin-bottom:10px}
+  .step p{color:#473f37;font-size:.98rem}
+  @media(max-width:780px){.steps{grid-template-columns:1fr}.step{border-right:none;border-bottom:2px solid var(--ink)}.step:last-child{border-bottom:none}}
+
+  /* ---- score explainer ---- */
+  .score-band{background:var(--ink);color:var(--paper);border-radius:0}
+  .score-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:60px;align-items:center}
+  .score-grid h2{color:var(--paper)}
+  .score-grid .section-head p{color:#bcae97}
+  .score-card{
+    background:var(--paper);color:var(--ink);border-radius:18px;padding:30px;
+    box-shadow:var(--shadow);transform:rotate(2deg);
+  }
+  .score-card .meter{display:flex;align-items:baseline;gap:12px;margin-bottom:8px}
+  .score-card .meter .big{font-family:'Fraunces',serif;font-weight:900;font-size:4rem;line-height:1;color:var(--accent-2)}
+  .score-card .badge{background:var(--accent-2);color:#fff;font-weight:600;font-size:.8rem;padding:4px 12px;border-radius:30px}
+  .score-card .prod{font-weight:600;font-size:1.1rem;margin:14px 0 4px}
+  .score-card .price{font-family:'Fraunces',serif;font-size:1.5rem;font-weight:700}
+  .score-card .was{text-decoration:line-through;color:#9a8f7f;font-size:1rem;margin-left:8px;font-family:'Spline Sans'}
+  .score-card .off{color:var(--accent);font-weight:600;margin-left:8px}
+  .bars{margin-top:22px;display:flex;flex-direction:column;gap:12px}
+  .bar-row{display:flex;align-items:center;gap:14px;font-size:.85rem}
+  .bar-row .lbl{width:110px;color:#6b6053;flex-shrink:0}
+  .bar{height:9px;background:var(--paper-2);border-radius:20px;flex:1;overflow:hidden}
+  .bar i{display:block;height:100%;background:var(--accent-2);border-radius:20px}
+  @media(max-width:780px){.score-grid{grid-template-columns:1fr;gap:36px}.score-card{transform:none}}
+
+  /* ---- categories ---- */
+  .cats{display:flex;flex-wrap:wrap;gap:14px}
+  .cat{
+    border:2px solid var(--paper);border-radius:50px;padding:11px 24px;
+    font-weight:600;font-size:1rem;background:var(--paper);color:var(--ink) !important;transition:all .2s;cursor:default;
+  }
+  .cat:hover{background:var(--accent);color:#fff;border-color:var(--accent);transform:translateY(-3px)}
+
+  /* ---- CTA band ---- */
+  .join{background:var(--accent);color:#fff;text-align:center}
+  .join h2{font-family:'Fraunces',serif;font-weight:900;font-size:clamp(2.2rem,6vw,4rem);letter-spacing:-.02em;margin-bottom:20px;color:#fff;line-height:1}
+  .join p{font-size:1.15rem;max-width:42ch;margin:0 auto 36px;color:#ffe7e0}
+  .join .btn-primary{background:#fff;color:var(--accent);box-shadow:6px 6px 0 var(--ink)}
+
+  /* ---- footer ---- */
+  footer{background:var(--ink);color:#bcae97;padding:60px 0 40px}
+  footer .wrap{display:flex;justify-content:space-between;gap:30px;flex-wrap:wrap}
+  footer .logo{color:var(--paper);margin-bottom:14px}
+  footer a{color:#bcae97;text-decoration:none;display:block;margin-bottom:8px;transition:color .2s}
+  footer a:hover{color:var(--gold)}
+  .foot-col h4{color:var(--paper);font-size:.8rem;letter-spacing:.12em;text-transform:uppercase;margin-bottom:16px;font-weight:600}
+  .disclosure{
+    border-top:1px solid #2c2722;margin-top:40px;padding-top:24px;
+    font-size:.82rem;color:#7d7263;max-width:70ch;
+  }
+  .reveal{opacity:1;transform:none;transition:opacity .7s, transform .7s}
+  .js-on .reveal{opacity:0;transform:translateY(24px)}
+  .js-on .reveal.in{opacity:1;transform:none}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo"><span class="dot"></span>YourDealsUK</div>
+  <a class="nav-cta" href="#join">Get free alerts →</a>
+</nav>
+
+<header>
+  <div class="wrap">
+    <span class="eyebrow">UK price intelligence</span>
+    <h1>We watch the prices so you <em>never overpay</em>.</h1>
+    <p class="lede">YourDealsUK scans UK retailers around the clock and surfaces only the genuinely good discounts — each one scored against its price history, then sent the moment it drops.</p>
+    <div class="cta-row">
+      <a class="btn btn-primary" href="#join">Join on Telegram <span>↗</span></a>
+      <a class="btn btn-ghost" href="#how">How it works</a>
+    </div>
+  </div>
+  <div class="hero-badge">
+    <div>
+      <div class="big">24/7</div>
+      <div class="sm">always scanning</div>
+    </div>
+  </div>
+</header>
+
+<div class="ticker">
+  <div class="ticker-track" id="ticker">
+    <span>Air fryer <span class="pct">−40%</span></span><span>OLED TV <span class="pct">−32%</span></span><span>Noise-cancelling headphones <span class="pct">−42%</span></span><span>Robot vacuum <span class="pct">−55%</span></span><span>Mechanical keyboard <span class="pct">−38%</span></span><span>Espresso machine <span class="pct">−29%</span></span>
+    <span>Air fryer <span class="pct">−40%</span></span><span>OLED TV <span class="pct">−32%</span></span><span>Noise-cancelling headphones <span class="pct">−42%</span></span><span>Robot vacuum <span class="pct">−55%</span></span><span>Mechanical keyboard <span class="pct">−38%</span></span><span>Espresso machine <span class="pct">−29%</span></span>
+  </div>
+</div>
+
+<section id="how">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <h2>Most deal channels just repost everything. We don't.</h2>
+      <p>Every deal runs through a three-stage filter before it ever reaches you.</p>
+    </div>
+    <div class="steps reveal">
+      <div class="step">
+        <span class="num">01</span>
+        <h3>Scan</h3>
+        <p>We pull live prices from major UK retailers continuously — Amazon, Argos, Currys and more — building a price history for every product.</p>
+      </div>
+      <div class="step">
+        <span class="num">02</span>
+        <h3>Score</h3>
+        <p>Each discount is graded 0–100 on how deep it is, how it compares to the product's own price history, and the real money saved.</p>
+      </div>
+      <div class="step">
+        <span class="num">03</span>
+        <h3>Send</h3>
+        <p>Only deals that clear the bar get posted — instantly, to the right category channel, so your feed stays sharp, not spammy.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="score-band">
+  <div class="wrap">
+    <div class="score-grid">
+      <div>
+        <div class="section-head reveal">
+          <h2>A score you can trust.</h2>
+          <p>“30% off” means nothing if the price was inflated last week. Our score weighs the discount against the product's actual history — so a high number means a genuinely rare price.</p>
+        </div>
+        <div class="cats reveal">
+          <div class="cat">Tech</div>
+          <div class="cat">Home</div>
+          <div class="cat">Gaming</div>
+          <div class="cat">Baby</div>
+          <div class="cat">Kitchen</div>
+        </div>
+      </div>
+      <div class="score-card reveal">
+        <div class="meter"><span class="big">88</span><span class="badge">RED HOT</span></div>
+        <div class="prod">Sony WH-1000XM5 Headphones</div>
+        <div><span class="price">£219</span><span class="was">£379</span><span class="off">−42%</span></div>
+        <div class="bars">
+          <div class="bar-row"><span class="lbl">Discount depth</span><div class="bar"><i style="width:84%"></i></div></div>
+          <div class="bar-row"><span class="lbl">Vs. history</span><div class="bar"><i style="width:92%"></i></div></div>
+          <div class="bar-row"><span class="lbl">Money saved</span><div class="bar"><i style="width:78%"></i></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="join" class="join">
+  <div class="wrap">
+    <h2 class="reveal">Good deals. No noise. Free.</h2>
+    <p class="reveal">Join the Telegram channel and get the day's sharpest UK discounts the moment they're found.</p>
+    <a class="btn btn-primary reveal" href="REPLACE_WITH_YOUR_TELEGRAM_LINK">Join YourDealsUK on Telegram ↗</a>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-col">
+      <div class="logo"><span class="dot"></span>YourDealsUK</div>
+      <p style="max-width:30ch">UK price intelligence, scanning around the clock so you never overpay.</p>
+    </div>
+    <div class="foot-col">
+      <h4>Explore</h4>
+      <a href="#how">How it works</a>
+      <a href="#join">Join free</a>
+    </div>
+    <div class="foot-col">
+      <h4>Legal</h4>
+      <a href="#">Privacy</a>
+      <a href="#">Terms</a>
+    </div>
+  </div>
+  <div class="wrap">
+    <p class="disclosure">YourDealsUK participates in affiliate programmes, including the Amazon Associates Programme and Awin. When you buy through links we share, we may earn a commission at no extra cost to you. Prices and availability are accurate as of the time of posting and may change; always check the final price on the retailer's site before purchasing.</p>
+  </div>
+</footer>
+
+<script>
+  // Progressive enhancement: only enable hide-then-reveal if JS runs.
+  document.body.classList.add('js-on');
+  const obs = new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{ if(e.isIntersecting) e.target.classList.add('in'); });
+  },{threshold:.12});
+  document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+  // Safety net: if anything goes wrong, show everything after 2.5s.
+  setTimeout(()=>document.querySelectorAll('.reveal').forEach(el=>el.classList.add('in')),2500);
+</script>
+</body>
+</html>
