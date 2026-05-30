@@ -32,32 +32,24 @@ def in_quiet_hours(quiet_hours: list[int]) -> bool:
 
 
 def _redact(text: str) -> str:
-    """Strip anything secret-like from a string before it is logged, so
-    API keys / tokens / feed URLs can never appear in CI logs even if an
-    exception embeds them. Defense-in-depth: the scanners already swallow
-    their own URL-bearing errors."""
+    """Strip anything secret-like from a string before it is logged."""
     import re as _re
     s = str(text)
-    # Full URLs (Awin feed URLs carry the API key in the path/query).
     s = _re.sub(r"https?://[^\s'\"]+", "[url-redacted]", s)
-    # Long opaque tokens / JWTs / api keys.
     s = _re.sub(r"\b[A-Za-z0-9_-]{24,}\b", "[token-redacted]", s)
-    # Telegram bot-token shape: digits:longstring
     s = _re.sub(r"\b[0-9]{6,}:[A-Za-z0-9_-]{10,}\b", "[token-redacted]", s)
     return s
 
 
 def build_scanners(cfg: Config):
-    """Build a scanner per enabled category. Each category declares a
-    `source:` of either 'ccc' (CamelCamelCamel RSS) or 'awin' (Awin
-    datafeed). Defaults to 'ccc' for backward compatibility."""
+    """Build a scanner per enabled category."""
     ua = cfg.scrape_fallback.get("user_agent", "UKDealsScanner/1.0")
     fb = cfg.scrape_fallback.get("enabled", False)
     mn = float(cfg.scrape_fallback.get("min_delay_seconds", 0))
     mx = float(cfg.scrape_fallback.get("max_delay_seconds", 0))
     min_pct = float(cfg.filters.get("min_discount_pct", 0))
 
-    awin_feeds = cfg.awin_feed_urls()  # parsed from AWIN_FEED_URLS secret
+    awin_feeds = cfg.awin_feed_urls()
 
     scanners = []
     for category, conf in cfg.categories.items():
@@ -66,9 +58,6 @@ def build_scanners(cfg: Config):
         source = (conf.get("source") or "ccc").lower()
 
         if source == "awin":
-            # Each awin category can name which feeds to use by index/label,
-            # but the simplest model: all awin categories share the secret
-            # feed list and rely on keyword filtering to separate them.
             if not awin_feeds:
                 print(f"[warn] category '{category}' is source=awin but "
                       f"AWIN_FEED_URLS secret is empty — skipping.")
@@ -100,8 +89,7 @@ def build_scanners(cfg: Config):
 
 
 def score_and_filter(cfg: Config, db: DB | None, raw: RawDeal) -> ScoredDeal | None:
-    """Apply history, scoring and threshold filters. Returns a ScoredDeal
-    or None if the deal should be skipped."""
+    """Apply history, scoring and threshold filters."""
     if cfg.filters.get("require_in_stock", True) and not raw.in_stock:
         return None
 
@@ -111,7 +99,7 @@ def score_and_filter(cfg: Config, db: DB | None, raw: RawDeal) -> ScoredDeal | N
 
     hist_low = hist_avg = None
     if db is not None:
-        db.record_price(raw)                    # build history over time
+        db.record_price(raw)
         hist_low, hist_avg = db.history_stats(raw)
 
     score = score_deal(
@@ -162,14 +150,16 @@ async def run(test: bool, limit_override: int | None) -> int:
     try:
         # DB is optional in dry-run so you can test with zero setup.
         if not dry_run:
-            db = DB(cfg.secrets.supabase_url, cfg.secrets.supabase_service_key)
+            db = DB(cfg.secrets.database_url)
+            db.init_schema()
             poster = TelegramPoster(
                 cfg.secrets.telegram_bot_token, cfg.secrets.alert_chat_id
             )
         else:
-            # Still init DB if creds exist, to exercise the real path.
+            # Still init DB if a URL exists, to exercise the real path.
             try:
-                db = DB(cfg.secrets.supabase_url, cfg.secrets.supabase_service_key)
+                db = DB(cfg.secrets.database_url)
+                db.init_schema()
             except Exception:
                 db = None
 
@@ -196,9 +186,7 @@ async def run(test: bool, limit_override: int | None) -> int:
             finally:
                 scanner.close()
 
-        # Best deals first; cap per run.
         candidates.sort(key=lambda d: d.deal_score, reverse=True)
-        # De-dupe within this run by hash (a feed can repeat across categories).
         seen: set[str] = set()
         unique = []
         for c in candidates:
@@ -238,6 +226,9 @@ async def run(test: bool, limit_override: int | None) -> int:
         if poster is not None:
             await poster.alert(f"Scan run failed: {_redact(e)}")
         return 1
+    finally:
+        if db is not None:
+            db.close()
 
 
 def main() -> None:
