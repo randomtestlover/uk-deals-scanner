@@ -1,0 +1,32 @@
+<svg width="520" height="160" viewBox="0 0 520 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="YourDealsUK logo">
+  <defs>
+    <style>
+      .ink{fill:#14110f}
+      .accent{fill:#d6452b}
+      .green{fill:#1f6f5c}
+      .paper{fill:#f4efe6}
+      .word{font-family:'Fraunces',Georgia,serif;font-weight:900;letter-spacing:-1px}
+      .uk{font-family:'Fraunces',Georgia,serif;font-weight:900}
+      .tag{font-family:'Spline Sans','Helvetica Neue',sans-serif;font-weight:600;letter-spacing:3px}
+    </style>
+  </defs>
+
+  <!-- Radar mark: concentric arcs sweeping out of a price tag -->
+  <g transform="translate(80,72)">
+    <!-- price tag body -->
+    <path class="ink" d="M-52,-30 L-8,-30 A8,8 0 0 1 0,-22 L0,22 A8,8 0 0 1 -8,30 L-52,30 A6,6 0 0 1 -58,24 L-58,-24 A6,6 0 0 1 -52,-30 Z"/>
+    <!-- tag hole -->
+    <circle class="paper" cx="-46" cy="0" r="6"/>
+    <!-- pound sign on the tag -->
+    <text class="word" x="-34" y="13" font-size="36" fill="#f4efe6">&#163;</text>
+    <!-- radar sweep arcs emanating right -->
+    <path d="M6,-10 A14,14 0 0 1 6,10" fill="none" stroke="#d6452b" stroke-width="5" stroke-linecap="round"/>
+    <path d="M16,-18 A24,24 0 0 1 16,18" fill="none" stroke="#d6452b" stroke-width="5" stroke-linecap="round" opacity="0.7"/>
+    <path d="M26,-26 A34,34 0 0 1 26,26" fill="none" stroke="#1f6f5c" stroke-width="5" stroke-linecap="round" opacity="0.55"/>
+  </g>
+
+  <!-- Wordmark -->
+  <text class="word ink" x="140" y="68" font-size="46">YourDeals<tspan class="accent">UK</tspan></text>
+  <!-- Tagline -->
+  <text class="tag green" x="142" y="100" font-size="13">UK PRICE INTELLIGENCE</text>
+</svg>
