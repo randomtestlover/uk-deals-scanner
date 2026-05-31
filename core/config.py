@@ -9,32 +9,45 @@ from typing import Any, Optional
 import yaml
 from dotenv import load_dotenv
 
-load_dotenv()  # no-op in CI/containers; loads .env locally
+load_dotenv()  # no-op in CI; loads .env locally
 
 
 @dataclass
 class Secrets:
     telegram_bot_token: str
-    database_url: str
+    supabase_url: str
+    supabase_service_key: str
     alert_chat_id: str = ""
 
     @classmethod
     def from_env(cls) -> "Secrets":
         missing = [
             k
-            for k in ("TELEGRAM_BOT_TOKEN", "DATABASE_URL")
+            for k in ("TELEGRAM_BOT_TOKEN", "SUPABASE_URL", "SUPABASE_SERVICE_KEY")
             if not os.getenv(k)
         ]
         if missing:
             raise RuntimeError(
                 f"Missing required secrets: {', '.join(missing)}. "
-                "Set them in Coolify's environment variables (or .env locally)."
+                "Set them in GitHub Secrets (or .env locally)."
             )
         return cls(
             telegram_bot_token=os.environ["TELEGRAM_BOT_TOKEN"].strip(),
-            database_url=os.environ["DATABASE_URL"].strip(),
+            supabase_url=cls._clean_url(os.environ["SUPABASE_URL"]),
+            supabase_service_key=os.environ["SUPABASE_SERVICE_KEY"].strip(),
             alert_chat_id=os.getenv("ALERT_CHAT_ID", "").strip(),
         )
+
+    @staticmethod
+    def _clean_url(url: str) -> str:
+        """Supabase expects the bare project URL (https://ref.supabase.co).
+        A trailing slash or an accidental /rest/v1 path causes PostgREST
+        error PGRST125 'Invalid path specified in request URL', so strip them."""
+        url = url.strip().rstrip("/")
+        for suffix in ("/rest/v1", "/rest", "/auth/v1"):
+            if url.endswith(suffix):
+                url = url[: -len(suffix)]
+        return url.rstrip("/")
 
 
 @dataclass
@@ -86,6 +99,7 @@ class Config:
         """Awin datafeed URLs come from the AWIN_FEED_URLS secret (they
         contain your API key, so they must not live in config.yaml).
         Multiple feeds are separated by '|'. Returns [] if unset."""
+        import os
         raw = os.getenv("AWIN_FEED_URLS", "").strip()
         if not raw:
             return []
