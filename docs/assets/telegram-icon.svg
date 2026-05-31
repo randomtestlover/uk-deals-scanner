@@ -1,0 +1,31 @@
+<svg width="640" height="640" viewBox="0 0 640 640" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="YourDealsUK icon">
+  <defs>
+    <style>
+      .word{font-family:'Fraunces',Georgia,serif;font-weight:900}
+    </style>
+  </defs>
+
+  <!-- Background: warm ink, fills the circle Telegram crops to -->
+  <rect width="640" height="640" fill="#14110f"/>
+
+  <!-- subtle dot-grid texture for depth -->
+  <g fill="#ffffff" opacity="0.04">
+    <circle cx="80" cy="80" r="3"/><circle cx="160" cy="80" r="3"/><circle cx="240" cy="80" r="3"/><circle cx="320" cy="80" r="3"/><circle cx="400" cy="80" r="3"/><circle cx="480" cy="80" r="3"/><circle cx="560" cy="80" r="3"/>
+    <circle cx="80" cy="560" r="3"/><circle cx="160" cy="560" r="3"/><circle cx="240" cy="560" r="3"/><circle cx="320" cy="560" r="3"/><circle cx="400" cy="560" r="3"/><circle cx="480" cy="560" r="3"/><circle cx="560" cy="560" r="3"/>
+  </g>
+
+  <!-- Centerpiece: price tag with £, radar sweep arcs -->
+  <g transform="translate(355,320)">
+    <!-- radar arcs behind, fanning right -->
+    <path d="M70,-70 A98,98 0 0 1 70,70" fill="none" stroke="#1f6f5c" stroke-width="16" stroke-linecap="round" opacity="0.55"/>
+    <path d="M48,-54 A74,74 0 0 1 48,54" fill="none" stroke="#d6452b" stroke-width="16" stroke-linecap="round" opacity="0.8"/>
+    <path d="M28,-38 A50,50 0 0 1 28,38" fill="none" stroke="#d6452b" stroke-width="16" stroke-linecap="round"/>
+
+    <!-- price tag body -->
+    <path d="M-150,-92 L-30,-92 A22,22 0 0 1 -8,-70 L-8,70 A22,22 0 0 1 -30,92 L-150,92 A18,18 0 0 1 -168,74 L-168,-74 A18,18 0 0 1 -150,-92 Z" fill="#f4efe6"/>
+    <!-- tag hole -->
+    <circle cx="-134" cy="0" r="16" fill="#14110f"/>
+    <!-- £ -->
+    <text class="word" x="-104" y="44" font-size="120" fill="#14110f">&#163;</text>
+  </g>
+</svg>

@@ -1,0 +1,42 @@
+<svg width="640" height="640" viewBox="0 0 640 640" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="YourDealsUK icon">
+  <defs>
+    <style>
+      .word{font-family:'Fraunces',Georgia,serif;font-weight:900}
+    </style>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fff6ec"/>
+      <stop offset="1" stop-color="#ffe9d6"/>
+    </linearGradient>
+    <linearGradient id="tag" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#e8492c"/>
+      <stop offset="1" stop-color="#d6452b"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Warm-white gradient background -->
+  <rect width="640" height="640" fill="url(#bg)"/>
+
+  <!-- definition ring so it doesn't vanish on white app backgrounds -->
+  <circle cx="320" cy="320" r="312" fill="none" stroke="#e8492c" stroke-width="10" opacity="0.9"/>
+
+  <!-- faint dot-grid texture -->
+  <g fill="#d6452b" opacity="0.06">
+    <circle cx="70" cy="70" r="4"/><circle cx="160" cy="70" r="4"/><circle cx="250" cy="70" r="4"/><circle cx="390" cy="70" r="4"/><circle cx="480" cy="70" r="4"/><circle cx="570" cy="70" r="4"/>
+    <circle cx="70" cy="570" r="4"/><circle cx="160" cy="570" r="4"/><circle cx="250" cy="570" r="4"/><circle cx="390" cy="570" r="4"/><circle cx="480" cy="570" r="4"/><circle cx="570" cy="570" r="4"/>
+  </g>
+
+  <!-- Centerpiece: vivid price tag + radar sweep -->
+  <g transform="translate(355,320)">
+    <!-- radar arcs: vivid green + gold + vermilion -->
+    <path d="M70,-70 A98,98 0 0 1 70,70" fill="none" stroke="#1f9e7e" stroke-width="18" stroke-linecap="round"/>
+    <path d="M48,-54 A74,74 0 0 1 48,54" fill="none" stroke="#f0a52b" stroke-width="18" stroke-linecap="round"/>
+    <path d="M28,-38 A50,50 0 0 1 28,38" fill="none" stroke="#e8492c" stroke-width="18" stroke-linecap="round"/>
+
+    <!-- price tag body, vivid vermilion with soft shadow -->
+    <path d="M-150,-92 L-30,-92 A22,22 0 0 1 -8,-70 L-8,70 A22,22 0 0 1 -30,92 L-150,92 A18,18 0 0 1 -168,74 L-168,-74 A18,18 0 0 1 -150,-92 Z" fill="url(#tag)"/>
+    <!-- tag hole -->
+    <circle cx="-134" cy="0" r="16" fill="#fff6ec"/>
+    <!-- £ in warm white -->
+    <text class="word" x="-104" y="44" font-size="120" fill="#fff6ec">&#163;</text>
+  </g>
+</svg>
