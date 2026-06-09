@@ -1,0 +1,71 @@
+# FlightDeals UK — worker configuration.
+# Routes are generated as (free + plus origins) x destinations.
+# Secrets NEVER live here — see .env.example.
+
+project: flightdeals-uk
+currency: GBP
+
+detection:
+  baseline_days: 90        # rolling window for the median baseline
+  min_samples: 5           # baseline must have >= this many snapshots to fire a sale
+  sale_discount: 0.25      # fire when price <= baseline * (1 - sale_discount)
+  dedupe_days: 7           # suppress reposts of the same fare_hash for this long
+  price_bucket_gbp: 10     # fare_hash price bucketing
+  max_posts_per_run: 6     # Telegram posting cap per run
+  snapshot_retention_days: 120
+  sweep_months_ahead: 2    # sweep departures for this many months from now
+  trip_nights: 7           # assumed return-trip length for cached sweeps
+
+# GBP absolute floors per haul band ("exceptional / error fare" trigger —
+# fires even with no baseline history).
+bands:
+  short:  { floor_gbp: 20 }
+  medium: { floor_gbp: 90 }
+  long:   { floor_gbp: 280 }
+
+airports:
+  free:   # major hubs — broadcast to the free Telegram channel + free web tier
+    - { iata: LHR, name: London Heathrow,  city: London }
+    - { iata: LGW, name: London Gatwick,   city: London }
+    - { iata: STN, name: London Stansted,  city: London }
+    - { iata: LTN, name: London Luton,     city: London }
+    - { iata: MAN, name: Manchester,       city: Manchester }
+  plus:   # regional — the paid differentiator
+    - { iata: EMA, name: East Midlands,    city: Nottingham }
+    - { iata: BHX, name: Birmingham,       city: Birmingham }
+    - { iata: BRS, name: Bristol,          city: Bristol }
+    - { iata: LBA, name: Leeds Bradford,   city: Leeds }
+    - { iata: NCL, name: Newcastle,        city: Newcastle }
+    - { iata: EDI, name: Edinburgh,        city: Edinburgh }
+    - { iata: GLA, name: Glasgow,          city: Glasgow }
+
+# [iata, display name, band]
+destinations:
+  - [BCN, Barcelona, short]
+  - [AGP, Malaga, short]
+  - [ALC, Alicante, short]
+  - [PMI, Palma de Mallorca, short]
+  - [MAD, Madrid, short]
+  - [LIS, Lisbon, short]
+  - [FAO, Faro, short]
+  - [DUB, Dublin, short]
+  - [AMS, Amsterdam, short]
+  - [CDG, Paris CDG, short]
+  - [FCO, Rome Fiumicino, short]
+  - [MXP, Milan Malpensa, short]
+  - [PRG, Prague, short]
+  - [BUD, Budapest, short]
+  - [KRK, Krakow, short]
+  - [CPH, Copenhagen, short]
+  - [VIE, Vienna, short]
+  - [ATH, Athens, medium]
+  - [LCA, Larnaca, medium]
+  - [IST, Istanbul, medium]
+  - [KEF, Reykjavik, medium]
+  - [TFS, Tenerife South, medium]
+  - [MLA, Malta, medium]
+  - [DXB, Dubai, long]
+  - [JFK, New York JFK, long]
+  - [BOS, Boston, long]
+  - [BKK, Bangkok, long]
+  - [SIN, Singapore, long]

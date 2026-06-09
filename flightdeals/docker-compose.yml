@@ -1,0 +1,79 @@
+# FlightDeals UK — Coolify / docker-compose deployment
+#
+# Coolify setup:
+#   1. Add this repo as a Docker Compose resource (or deploy web/ and worker/
+#      as separate apps with db as a Coolify Postgres service).
+#   2. Set the env vars from web/.env.example and worker/.env.example.
+#   3. Scheduled task (nightly sweep), e.g. cron `15 2 * * *`:
+#        docker compose run --rm worker python main.py all
+#   4. Point your domain at `web`; Coolify's Traefik handles TLS.
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: flightdeals
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      POSTGRES_DB: flightdeals
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U flightdeals -d flightdeals"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build:
+      context: ./web
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://flightdeals:${POSTGRES_PASSWORD}@db:5432/flightdeals
+      AUTH_SECRET: ${AUTH_SECRET:?set AUTH_SECRET}
+      AUTH_TRUST_HOST: "true"
+      SITE_BASE_URL: ${SITE_BASE_URL:-http://localhost:3000}
+      AUTH_RESEND_KEY: ${AUTH_RESEND_KEY:-}
+      AUTH_EMAIL_FROM: ${AUTH_EMAIL_FROM:-}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      STRIPE_PRICE_PLUS: ${STRIPE_PRICE_PLUS:-}
+      STRIPE_PRICE_PRO: ${STRIPE_PRICE_PRO:-}
+      LIVE_SEARCH_PROVIDER: ${LIVE_SEARCH_PROVIDER:-serpapi}
+      SERPAPI_KEY: ${SERPAPI_KEY:-}
+      APIFY_TOKEN: ${APIFY_TOKEN:-}
+      APIFY_ACTOR: ${APIFY_ACTOR:-}
+      TRAVELPAYOUTS_MARKER: ${TRAVELPAYOUTS_MARKER:-}
+    ports:
+      - "3000:3000"
+
+  # Not a daemon: run via Coolify scheduled task / cron.
+  #   docker compose run --rm worker python main.py all
+  worker:
+    build:
+      context: .
+      dockerfile: worker/Dockerfile
+    profiles: ["task"]
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://flightdeals:${POSTGRES_PASSWORD}@db:5432/flightdeals
+      TRAVELPAYOUTS_TOKEN: ${TRAVELPAYOUTS_TOKEN:-}
+      TRAVELPAYOUTS_MARKER: ${TRAVELPAYOUTS_MARKER:-}
+      KIWI_API_KEY: ${KIWI_API_KEY:-}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      TELEGRAM_CHANNEL_ID: ${TELEGRAM_CHANNEL_ID:-}
+      ADMIN_CHAT_ID: ${ADMIN_CHAT_ID:-}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      ALERT_FROM_EMAIL: ${ALERT_FROM_EMAIL:-}
+      SITE_BASE_URL: ${SITE_BASE_URL:-http://localhost:3000}
+      SHADOW_MODE: ${SHADOW_MODE:-0}
+
+volumes:
+  pgdata:
