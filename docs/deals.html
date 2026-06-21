@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>All Deals — YourDealsUK</title>
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="theme-color" content="#14110f">
+
+<meta name="description" content="Browse every live UK deal YourDealsUK has found — scored 0–100 against price history. Group by category, sort by discount or price, and filter to exactly what you want." />
+<meta property="og:title" content="All Deals — YourDealsUK" />
+<meta property="og:description" content="Every live UK deal, scored against price history. Group, sort and filter to find the best." />
+<meta property="og:type" content="website" />
+<meta name="robots" content="index,follow" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,900;1,9..144,500;1,9..144,900&family=Spline+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#14110f;--ink-2:#2a241f;
+    --paper:#f4efe6;--paper-2:#eae1d2;--paper-3:#e2d6c2;
+    --accent:#d6452b;--accent-deep:#b8381f;
+    --green:#1f6f5c;--green-bright:#1f9e7e;--gold:#d8932b;
+    --line:#cdbfa8;--muted:#6b6053;--body:#3a332c;
+    --shadow-hard:14px 14px 0 rgba(20,17,15,.92);
+    --shadow-card:7px 7px 0 rgba(20,17,15,.9);
+    --shadow-soft:0 24px 60px -28px rgba(20,17,15,.45);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+  body{
+    background:var(--paper);color:var(--body);font-family:'Spline Sans',sans-serif;line-height:1.65;overflow-x:hidden;min-height:100vh;
+    background-image:radial-gradient(circle at 1px 1px, rgba(20,17,15,.045) 1px, transparent 0);background-size:24px 24px;
+  }
+  ::selection{background:var(--accent);color:#fff}
+  .wrap{max-width:1160px;margin:0 auto;padding:0 32px}
+  @media(max-width:560px){.wrap{padding:0 22px}}
+
+  /* --- nav (shared with index) --- */
+  nav{
+    display:flex;justify-content:space-between;align-items:center;padding:24px 32px;max-width:1160px;margin:0 auto;
+    position:sticky;top:0;z-index:50;background:rgba(244,239,230,.86);backdrop-filter:blur(10px);
+    border-bottom:1px solid transparent;transition:border-color .3s;
+  }
+  nav.scrolled{border-bottom-color:var(--line)}
+  .logo{font-family:'Fraunces',serif;font-weight:900;font-size:1.45rem;letter-spacing:-.02em;display:flex;align-items:center;gap:11px;color:var(--ink);text-decoration:none}
+  .logo svg{width:36px;height:36px;flex-shrink:0;display:block}
+  .logo .uk{color:var(--accent)}
+  .nav-right{display:flex;align-items:center;gap:26px}
+  .nav-link{text-decoration:none;color:var(--ink-2);font-weight:500;font-size:.95rem;transition:color .2s}
+  .nav-link:hover,.nav-link.current{color:var(--accent)}
+  @media(max-width:680px){.nav-link{display:none}}
+  .nav-cta{font-weight:600;font-size:.92rem;text-decoration:none;color:#fff;background:var(--accent);padding:10px 22px;border-radius:40px;transition:transform .18s, box-shadow .18s;box-shadow:0 4px 0 var(--accent-deep)}
+  .nav-cta:hover{transform:translateY(-2px);box-shadow:0 6px 0 var(--accent-deep)}
+  .nav-cta:active{transform:translateY(1px);box-shadow:0 2px 0 var(--accent-deep)}
+
+  /* --- page head --- */
+  .page-head{padding:48px 0 6px}
+  .page-head .eyebrow{display:inline-flex;align-items:center;gap:10px;font-size:.76rem;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--green);margin-bottom:18px}
+  .page-head .eyebrow::before{content:"";width:34px;height:2px;background:var(--green)}
+  .page-head h1{font-family:'Fraunces',serif;font-weight:900;font-size:clamp(2.2rem,5.4vw,3.6rem);line-height:1;letter-spacing:-.03em;color:var(--ink)}
+  .page-head h1 em{font-style:italic;color:var(--accent)}
+  .page-head .sub{font-size:1.08rem;color:var(--ink-2);max-width:54ch;margin-top:16px}
+  .updated{display:inline-flex;align-items:center;gap:8px;font-size:.85rem;color:var(--muted);margin-top:14px}
+  .updated .pulse{width:8px;height:8px;background:var(--green-bright);border-radius:50%;animation:pulse 1.8s infinite}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(31,158,126,.5)}70%{box-shadow:0 0 0 8px rgba(31,158,126,0)}100%{box-shadow:0 0 0 0 rgba(31,158,126,0)}}
+
+  /* --- toolbar / filters --- */
+  .toolbar{margin:30px 0 10px;border:2px solid var(--ink);border-radius:16px;background:var(--paper-2);padding:18px;display:flex;flex-direction:column;gap:16px}
+  .tb-row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+  .search{flex:1;min-width:220px;display:flex;align-items:center;gap:10px;background:var(--paper);border:1.5px solid var(--line);border-radius:12px;padding:11px 14px;transition:border-color .2s}
+  .search:focus-within{border-color:var(--ink)}
+  .search svg{width:18px;height:18px;flex-shrink:0}
+  .search input{border:none;background:none;outline:none;font:inherit;color:var(--ink);width:100%}
+  .field{display:inline-flex;align-items:center;gap:8px;font-size:.86rem;color:var(--muted)}
+  select,.num{font:inherit;font-size:.92rem;color:var(--ink);background:var(--paper);border:1.5px solid var(--line);border-radius:10px;padding:9px 12px;outline:none;transition:border-color .2s;cursor:pointer}
+  select:focus,.num:focus{border-color:var(--ink)}
+  .num{width:88px;cursor:text}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  .chips .lbl{font-size:.86rem;color:var(--muted);margin-right:2px}
+  .chip{border:1.5px solid var(--line);background:var(--paper);color:var(--ink-2);border-radius:40px;padding:7px 15px;font:inherit;font-size:.87rem;font-weight:500;cursor:pointer;transition:all .15s;white-space:nowrap}
+  .chip:hover{border-color:var(--ink)}
+  .chip.on{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+  .toggle{display:inline-flex;align-items:center;gap:9px;cursor:pointer;font-size:.9rem;color:var(--ink-2);user-select:none}
+  .toggle input{width:17px;height:17px;accent-color:var(--accent);cursor:pointer}
+  .reset{margin-left:auto;background:none;border:none;color:var(--accent);font:inherit;font-weight:600;cursor:pointer;padding:8px 4px}
+  .reset:hover{text-decoration:underline}
+  .tb-foot{display:flex;align-items:center;gap:14px;flex-wrap:wrap;border-top:1px dashed var(--line);padding-top:14px}
+  .count{font-size:.9rem;color:var(--muted)}
+  .count b{color:var(--ink);font-weight:600}
+
+  /* --- results --- */
+  .results{padding:18px 0 40px;min-height:40vh}
+  .group-head{display:flex;align-items:baseline;gap:12px;margin:36px 0 18px;flex-wrap:wrap}
+  .group-head:first-child{margin-top:8px}
+  .group-head h2{font-family:'Fraunces',serif;font-weight:900;font-size:1.5rem;color:var(--ink);letter-spacing:-.01em;text-transform:capitalize}
+  .group-head .gc{font-size:.84rem;color:var(--muted);font-weight:500}
+  .group-head .rule{flex:1;height:2px;background:var(--line);border-radius:2px;min-width:30px}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));gap:18px}
+  .card{position:relative;display:flex;flex-direction:column;border:1.5px solid var(--line);border-radius:16px;background:var(--paper);padding:18px;transition:transform .18s,border-color .18s,box-shadow .18s}
+  .card:hover{transform:translateY(-4px);border-color:var(--ink);box-shadow:var(--shadow-card)}
+  .card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:11px}
+  .card .cat{font-size:.7rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);padding-top:3px}
+  .badge{flex-shrink:0;font-weight:700;font-size:.68rem;letter-spacing:.04em;padding:5px 10px;border-radius:30px;white-space:nowrap}
+  .badge.hot{background:var(--accent);color:#fff}
+  .badge.great{background:var(--gold);color:#2a1c02}
+  .badge.good{background:var(--green);color:#fff}
+  .badge.ok{background:var(--paper-3);color:var(--ink-2)}
+  .title{font-weight:600;font-size:1.01rem;line-height:1.34;color:var(--ink);margin-bottom:14px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+  .card-price{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;margin-bottom:13px}
+  .card-price .now{font-family:'Fraunces',serif;font-weight:900;font-size:1.6rem;color:var(--ink);line-height:1}
+  .card-price .was{text-decoration:line-through;color:var(--muted);font-size:.95rem}
+  .card-price .off{color:#fff;background:var(--accent);font-weight:700;font-size:.76rem;padding:2px 9px;border-radius:7px}
+  .card-meta{display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:.8rem;color:var(--muted);margin-top:auto}
+  .stock{display:inline-flex;align-items:center;gap:6px}
+  .stock::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--green-bright)}
+  .stock.out{color:var(--accent)}
+  .stock.out::before{background:var(--accent)}
+  .card-cta{margin-top:15px;text-align:center;font-weight:600;font-size:.92rem;text-decoration:none;color:#fff;background:var(--ink);border-radius:10px;padding:11px;transition:background .15s,transform .12s}
+  .card-cta:hover{background:var(--accent);transform:translateY(-1px)}
+  .card-cta.disabled{background:var(--paper-3);color:var(--muted);pointer-events:none}
+
+  .state{border:2px dashed var(--line);border-radius:16px;padding:64px 26px;text-align:center;color:var(--muted)}
+  .state h3{font-family:'Fraunces',serif;color:var(--ink);font-size:1.5rem;margin-bottom:10px}
+  .state p{max-width:46ch;margin:0 auto 8px}
+  .state a{color:var(--accent);font-weight:600;text-decoration:none}
+  .state a:hover{text-decoration:underline}
+  .skeleton{display:grid;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));gap:18px}
+  .sk{height:210px;border-radius:16px;background:linear-gradient(100deg,var(--paper-2) 30%,var(--paper-3) 50%,var(--paper-2) 70%);background-size:200% 100%;animation:sk 1.3s linear infinite}
+  @keyframes sk{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+  /* --- footer (shared with index) --- */
+  footer{background:var(--ink);color:#bcae97;padding:64px 0 44px;margin-top:30px}
+  .foot-top{display:flex;justify-content:space-between;gap:40px;flex-wrap:wrap}
+  .foot-brand{max-width:32ch}
+  footer .logo{color:var(--paper);margin-bottom:16px}
+  footer .logo .uk{color:var(--accent)}
+  .foot-brand p{font-size:.92rem;color:#9a8c79;line-height:1.6}
+  .foot-cols{display:flex;gap:64px;flex-wrap:wrap}
+  .foot-col h4{color:var(--paper);font-size:.76rem;letter-spacing:.14em;text-transform:uppercase;margin-bottom:16px;font-weight:600}
+  footer a{color:#bcae97;text-decoration:none;display:block;margin-bottom:9px;font-size:.94rem;transition:color .2s}
+  footer a:hover{color:var(--gold)}
+  .disclosure{border-top:1px solid #2c2722;margin-top:48px;padding-top:26px;font-size:.8rem;color:#7d7263;max-width:78ch;line-height:1.6}
+</style>
+</head>
+<body>
+
+<nav id="nav">
+  <a class="logo" href="/"><svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-label="YourDealsUK"><path d="M60,28 A18,18 0 0 1 60,72" fill="none" stroke="#1f6f5c" stroke-width="7" stroke-linecap="round"/><path d="M48,34 A13,13 0 0 1 48,66" fill="none" stroke="#d8932b" stroke-width="7" stroke-linecap="round"/><path d="M37,39 A9,9 0 0 1 37,61" fill="none" stroke="#d6452b" stroke-width="7" stroke-linecap="round"/><path d="M6,28 L26,28 A6,6 0 0 1 32,34 L32,66 A6,6 0 0 1 26,72 L6,72 A5,5 0 0 1 1,67 L1,33 A5,5 0 0 1 6,28 Z" fill="#d6452b"/><circle cx="9.5" cy="50" r="4" fill="#f4efe6"/><text x="15" y="62" font-family="Fraunces,Georgia,serif" font-weight="900" font-size="30" fill="#f4efe6">&#163;</text></svg><span>YourDeals<span class="uk">UK</span></span></a>
+  <div class="nav-right">
+    <a class="nav-link current" href="/deals.html">All deals</a>
+    <a class="nav-link" href="/#how">How it works</a>
+    <a class="nav-link" href="/#score">The score</a>
+    <a class="nav-cta" href="/#join">Get free alerts</a>
+  </div>
+</nav>
+
+<main>
+  <div class="wrap">
+    <div class="page-head">
+      <span class="eyebrow">Live deal board</span>
+      <h1>Every deal, <em>scored</em>.</h1>
+      <p class="sub">Browse every discount we've found and graded against its own price history. Group by category, sort by depth or price, and filter down to exactly what you're after.</p>
+      <div class="updated" id="updated" hidden><span class="pulse"></span><span id="updated-text"></span></div>
+    </div>
+
+    <div class="toolbar" id="toolbar" hidden>
+      <div class="tb-row">
+        <label class="search">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="#6b6053" stroke-width="2"/><line x1="16.5" y1="16.5" x2="21" y2="21" stroke="#d6452b" stroke-width="2" stroke-linecap="round"/></svg>
+          <input id="q" type="search" placeholder="Search deals…" aria-label="Search deals by title" autocomplete="off">
+        </label>
+        <label class="field">Sort
+          <select id="sort" aria-label="Sort deals">
+            <option value="score">Best score</option>
+            <option value="off">Biggest discount</option>
+            <option value="price_asc">Lowest price</option>
+            <option value="price_desc">Highest price</option>
+            <option value="new">Newest</option>
+          </select>
+        </label>
+        <label class="field">Group
+          <select id="group" aria-label="Group deals">
+            <option value="none">No grouping</option>
+            <option value="category">By category</option>
+            <option value="discount">By discount band</option>
+            <option value="tier">By score tier</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="tb-row">
+        <div class="chips" id="cats" role="group" aria-label="Filter by category"><span class="lbl">Category</span></div>
+      </div>
+
+      <div class="tb-row">
+        <div class="chips" role="group" aria-label="Minimum discount">
+          <span class="lbl">Min discount</span>
+          <button class="chip on" data-off="0">Any</button>
+          <button class="chip" data-off="20">20%+</button>
+          <button class="chip" data-off="30">30%+</button>
+          <button class="chip" data-off="50">50%+</button>
+        </div>
+        <label class="field">Price £
+          <input class="num" id="min" type="number" min="0" inputmode="decimal" placeholder="min" aria-label="Minimum price">
+          –
+          <input class="num" id="max" type="number" min="0" inputmode="decimal" placeholder="max" aria-label="Maximum price">
+        </label>
+        <label class="toggle"><input type="checkbox" id="instock">In stock only</label>
+        <button class="reset" id="reset" type="button">Reset filters</button>
+      </div>
+
+      <div class="tb-foot">
+        <span class="count" id="count"></span>
+      </div>
+    </div>
+
+    <div class="results" id="results" aria-live="polite">
+      <div class="skeleton" id="skeleton">
+        <div class="sk"></div><div class="sk"></div><div class="sk"></div><div class="sk"></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-top">
+      <div class="foot-brand">
+        <a class="logo" href="/"><svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-label="YourDealsUK"><path d="M60,28 A18,18 0 0 1 60,72" fill="none" stroke="#1f9e7e" stroke-width="7" stroke-linecap="round"/><path d="M48,34 A13,13 0 0 1 48,66" fill="none" stroke="#d8932b" stroke-width="7" stroke-linecap="round"/><path d="M37,39 A9,9 0 0 1 37,61" fill="none" stroke="#e8492c" stroke-width="7" stroke-linecap="round"/><path d="M6,28 L26,28 A6,6 0 0 1 32,34 L32,66 A6,6 0 0 1 26,72 L6,72 A5,5 0 0 1 1,67 L1,33 A5,5 0 0 1 6,28 Z" fill="#d6452b"/><circle cx="9.5" cy="50" r="4" fill="#14110f"/><text x="15" y="62" font-family="Fraunces,Georgia,serif" font-weight="900" font-size="30" fill="#f4efe6">&#163;</text></svg><span>YourDeals<span class="uk">UK</span></span></a>
+        <p>UK price intelligence, scanning around the clock so you never overpay.</p>
+      </div>
+      <div class="foot-cols">
+        <div class="foot-col">
+          <h4>Explore</h4>
+          <a href="/deals.html">All deals</a>
+          <a href="/#how">How it works</a>
+          <a href="/#score">The score</a>
+          <a href="/#join">Join free</a>
+        </div>
+        <div class="foot-col">
+          <h4>Legal</h4>
+          <a href="/privacy.html">Privacy</a>
+          <a href="/terms.html">Terms</a>
+        </div>
+        <div class="foot-col">
+          <h4>Contact</h4>
+          <a href="mailto:hello@yourdealsuk.co.uk">hello@yourdealsuk.co.uk</a>
+        </div>
+      </div>
+    </div>
+    <p class="disclosure">YourDealsUK participates in affiliate programmes, including the Amazon Associates Programme and Awin. When you buy through links we share, we may earn a commission at no extra cost to you. Prices and availability are accurate as of the time of posting and may change; always check the final price on the retailer's site before purchasing.</p>
+  </div>
+</footer>
+
+<script>
+(function(){
+  "use strict";
+
+  // --- tiny DOM helper; user-derived strings go in as text nodes (XSS-safe) ---
+  function h(tag, attrs){
+    var e = document.createElement(tag), i, k;
+    if(attrs) for(k in attrs){
+      if(k === "class") e.className = attrs[k];
+      else if(k === "text") e.textContent = attrs[k];
+      else if(attrs[k] != null) e.setAttribute(k, attrs[k]);
+    }
+    for(i = 2; i < arguments.length; i++){
+      var c = arguments[i];
+      if(c == null) continue;
+      e.appendChild(c.nodeType ? c : document.createTextNode(String(c)));
+    }
+    return e;
+  }
+
+  function gbp(n){
+    if(n == null || isNaN(n)) return "";
+    var opts = (n % 1 === 0) ? {} : {minimumFractionDigits:2, maximumFractionDigits:2};
+    return "£" + Number(n).toLocaleString("en-GB", opts);
+  }
+  function safeUrl(u){ return /^https?:\/\//i.test(u || "") ? u : null; }
+  function tier(s){ return s >= 85 ? "hot" : s >= 72 ? "great" : s >= 60 ? "good" : "ok"; }
+  var TIER_LABEL = {hot:"RED HOT", great:"GREAT", good:"GOOD", ok:"DEAL"};
+  function ago(iso){
+    var t = Date.parse(iso); if(isNaN(t)) return "";
+    var s = (Date.now() - t) / 1000;
+    if(s < 60) return "just now";
+    if(s < 3600) return Math.floor(s/60) + "m ago";
+    if(s < 86400) return Math.floor(s/3600) + "h ago";
+    if(s < 604800) return Math.floor(s/86400) + "d ago";
+    return new Date(t).toLocaleDateString("en-GB", {day:"numeric", month:"short"});
+  }
+  function titleCase(s){ return (s||"").replace(/\b\w/g, function(c){ return c.toUpperCase(); }); }
+
+  // --- state, hydrated from the URL so views are shareable ---
+  var P = new URLSearchParams(location.search);
+  var state = {
+    q:       P.get("q") || "",
+    sort:    P.get("sort") || "score",
+    group:   P.get("group") || "none",
+    cat:     P.get("cat") || "all",
+    off:     parseInt(P.get("off") || "0", 10) || 0,
+    min:     P.get("min") || "",
+    max:     P.get("max") || "",
+    inStock: P.get("stock") === "1"
+  };
+  var ALL = [];
+
+  function syncUrl(){
+    var p = new URLSearchParams();
+    if(state.q) p.set("q", state.q);
+    if(state.sort !== "score") p.set("sort", state.sort);
+    if(state.group !== "none") p.set("group", state.group);
+    if(state.cat !== "all") p.set("cat", state.cat);
+    if(state.off) p.set("off", state.off);
+    if(state.min) p.set("min", state.min);
+    if(state.max) p.set("max", state.max);
+    if(state.inStock) p.set("stock", "1");
+    var qs = p.toString();
+    history.replaceState(null, "", qs ? "?" + qs : location.pathname);
+  }
+
+  // --- card ---
+  function card(d){
+    var tr = tier(d.score), url = safeUrl(d.url);
+    var top = h("div", {class:"card-top"},
+      h("span", {class:"cat", text: titleCase(d.category)}),
+      h("span", {class:"badge " + tr, text: TIER_LABEL[tr] + " · " + d.score})
+    );
+    var price = h("div", {class:"card-price"}, h("span", {class:"now", text: gbp(d.price)}));
+    if(d.was != null) price.appendChild(h("span", {class:"was", text: gbp(d.was)}));
+    if(d.pct) price.appendChild(h("span", {class:"off", text: "−" + d.pct + "%"}));
+
+    var meta = h("div", {class:"card-meta"},
+      h("span", {class:"stock" + (d.in_stock ? "" : " out"), text: d.in_stock ? "In stock" : "Out of stock"})
+    );
+    if(d.added) meta.appendChild(h("span", {class:"added", text: ago(d.added)}));
+
+    var cta = url
+      ? h("a", {class:"card-cta", href:url, target:"_blank", rel:"sponsored nofollow noopener"}, "View deal ↗")
+      : h("span", {class:"card-cta disabled"}, "Link unavailable");
+
+    return h("article", {class:"card"}, top, h("h3", {class:"title", text: d.title || "Untitled deal"}), price, meta, cta);
+  }
+
+  // --- filtering / sorting / grouping ---
+  function filtered(){
+    var q = state.q.trim().toLowerCase();
+    var mn = parseFloat(state.min), mx = parseFloat(state.max);
+    return ALL.filter(function(d){
+      if(q && (d.title || "").toLowerCase().indexOf(q) === -1) return false;
+      if(state.cat !== "all" && d.category !== state.cat) return false;
+      if(state.off && (d.pct || 0) < state.off) return false;
+      if(!isNaN(mn) && d.price < mn) return false;
+      if(!isNaN(mx) && d.price > mx) return false;
+      if(state.inStock && !d.in_stock) return false;
+      return true;
+    });
+  }
+  var SORTERS = {
+    score:      function(a,b){ return b.score - a.score || (b.pct||0) - (a.pct||0); },
+    off:        function(a,b){ return (b.pct||0) - (a.pct||0) || b.score - a.score; },
+    price_asc:  function(a,b){ return a.price - b.price; },
+    price_desc: function(a,b){ return b.price - a.price; },
+    "new":      function(a,b){ return (Date.parse(b.added)||0) - (Date.parse(a.added)||0); }
+  };
+  function groupKey(d){
+    if(state.group === "category") return titleCase(d.category);
+    if(state.group === "tier")     return TIER_LABEL[tier(d.score)];
+    if(state.group === "discount"){
+      var p = d.pct || 0;
+      return p >= 50 ? "50% or more" : p >= 30 ? "30–49% off" : p >= 20 ? "20–29% off" : "Under 20% off";
+    }
+    return "";
+  }
+  var GROUP_ORDER = {
+    tier:     ["RED HOT","GREAT","GOOD","DEAL"],
+    discount: ["50% or more","30–49% off","20–29% off","Under 20% off"]
+  };
+
+  // --- render ---
+  var results = document.getElementById("results");
+  var countEl = document.getElementById("count");
+
+  function render(){
+    var list = filtered().sort(SORTERS[state.sort] || SORTERS.score);
+    countEl.innerHTML = "";
+    countEl.appendChild(h("span", {}, "Showing "));
+    countEl.appendChild(h("b", {text: String(list.length)}));
+    countEl.appendChild(h("span", {}, " of " + ALL.length + " deal" + (ALL.length === 1 ? "" : "s")));
+
+    results.innerHTML = "";
+    if(!list.length){
+      results.appendChild(h("div", {class:"state"},
+        h("h3", {}, ALL.length ? "No deals match those filters" : "No deals just yet"),
+        h("p", {}, ALL.length ? "Try widening the discount, price range or category." :
+          "The next scan will populate this board. In the meantime, join us on Telegram for live drops."),
+        ALL.length ? null : h("a", {href:"/#join"}, "Get free alerts →")
+      ));
+      return;
+    }
+
+    if(state.group === "none"){
+      results.appendChild(grid(list));
+      return;
+    }
+    var groups = {}, order = [];
+    list.forEach(function(d){
+      var k = groupKey(d);
+      if(!groups[k]){ groups[k] = []; order.push(k); }
+      groups[k].push(d);
+    });
+    var preset = GROUP_ORDER[state.group];
+    if(preset) order.sort(function(a,b){ return preset.indexOf(a) - preset.indexOf(b); });
+    else order.sort();
+
+    order.forEach(function(k){
+      var items = groups[k];
+      results.appendChild(h("div", {class:"group-head"},
+        h("h2", {text: k}),
+        h("span", {class:"gc", text: items.length + " deal" + (items.length === 1 ? "" : "s")}),
+        h("span", {class:"rule"})
+      ));
+      results.appendChild(grid(items));
+    });
+  }
+  function grid(items){
+    var g = h("div", {class:"grid"}), frag = document.createDocumentFragment();
+    items.forEach(function(d){ frag.appendChild(card(d)); });
+    g.appendChild(frag);
+    return g;
+  }
+
+  // --- wire up controls ---
+  function buildCatChips(){
+    var box = document.getElementById("cats");
+    var cats = {};
+    ALL.forEach(function(d){ cats[d.category] = (cats[d.category] || 0) + 1; });
+    var names = Object.keys(cats).sort();
+    function mk(value, label){
+      var b = h("button", {class:"chip" + (state.cat === value ? " on" : ""), "data-cat":value, text:label});
+      b.addEventListener("click", function(){
+        state.cat = value;
+        box.querySelectorAll(".chip").forEach(function(c){ c.classList.toggle("on", c.getAttribute("data-cat") === value); });
+        syncUrl(); render();
+      });
+      return b;
+    }
+    box.appendChild(mk("all", "All"));
+    names.forEach(function(n){ box.appendChild(mk(n, titleCase(n))); });
+  }
+
+  function bind(){
+    var q = document.getElementById("q"); q.value = state.q;
+    var t;
+    q.addEventListener("input", function(){
+      clearTimeout(t);
+      t = setTimeout(function(){ state.q = q.value; syncUrl(); render(); }, 160);
+    });
+
+    var sort = document.getElementById("sort"); sort.value = state.sort;
+    sort.addEventListener("change", function(){ state.sort = sort.value; syncUrl(); render(); });
+    var group = document.getElementById("group"); group.value = state.group;
+    group.addEventListener("change", function(){ state.group = group.value; syncUrl(); render(); });
+
+    document.querySelectorAll(".chip[data-off]").forEach(function(c){
+      c.classList.toggle("on", (parseInt(c.getAttribute("data-off"), 10) || 0) === state.off);
+      c.addEventListener("click", function(){
+        state.off = parseInt(c.getAttribute("data-off"), 10) || 0;
+        document.querySelectorAll(".chip[data-off]").forEach(function(x){ x.classList.toggle("on", x === c); });
+        syncUrl(); render();
+      });
+    });
+
+    var min = document.getElementById("min"); min.value = state.min;
+    var max = document.getElementById("max"); max.value = state.max;
+    function onPrice(){ state.min = min.value; state.max = max.value; syncUrl(); render(); }
+    min.addEventListener("input", onPrice);
+    max.addEventListener("input", onPrice);
+
+    var stock = document.getElementById("instock"); stock.checked = state.inStock;
+    stock.addEventListener("change", function(){ state.inStock = stock.checked; syncUrl(); render(); });
+
+    document.getElementById("reset").addEventListener("click", function(){
+      state = {q:"", sort:"score", group:"none", cat:"all", off:0, min:"", max:"", inStock:false};
+      q.value = ""; sort.value = "score"; group.value = "none"; min.value = ""; max.value = ""; stock.checked = false;
+      document.querySelectorAll(".chip[data-off]").forEach(function(x){ x.classList.toggle("on", x.getAttribute("data-off") === "0"); });
+      document.querySelectorAll("#cats .chip").forEach(function(x){ x.classList.toggle("on", x.getAttribute("data-cat") === "all"); });
+      syncUrl(); render();
+    });
+  }
+
+  function showUpdated(generatedAt, count){
+    var t = Date.parse(generatedAt);
+    var el = document.getElementById("updated"), tx = document.getElementById("updated-text");
+    if(isNaN(t) || t <= 0){ el.hidden = true; return; }
+    tx.textContent = count + " live deal" + (count === 1 ? "" : "s") + " · updated " + ago(generatedAt);
+    el.hidden = false;
+  }
+
+  function start(data){
+    ALL = (data && data.deals) || [];
+    document.getElementById("skeleton")?.remove();
+    document.getElementById("toolbar").hidden = false;
+    showUpdated(data && data.generated_at, ALL.length);
+    buildCatChips();
+    bind();
+    render();
+  }
+
+  function fail(){
+    document.getElementById("skeleton")?.remove();
+    results.appendChild(h("div", {class:"state"},
+      h("h3", {}, "Couldn't load the deals right now"),
+      h("p", {}, "Please refresh in a moment, or "),
+      h("a", {href:"/#join"}, "get live deals on Telegram →")
+    ));
+  }
+
+  // --- sample data (demo mode only): preview the layout via deals.html?demo=1 ---
+  function nowMinus(hrs){ return new Date(Date.now() - hrs*3600*1000).toISOString(); }
+  var DEMO = { generated_at: new Date().toISOString(), count: 8, deals: [
+    {title:"Sony WH-1000XM5 Wireless Noise-Cancelling Headphones", category:"tech", price:219, was:379, pct:42, score:88, in_stock:true, url:"https://www.amazon.co.uk/dp/B09XS7JWHH?tag=demo-21", added:nowMinus(2)},
+    {title:"Ninja Foodi 7.6L Dual Zone Air Fryer AF400UK", category:"kitchen", price:149.99, was:219.99, pct:32, score:74, in_stock:true, url:"https://www.amazon.co.uk/dp/B08C5KFkk?tag=demo-21", added:nowMinus(5)},
+    {title:"LG OLED55C4 55-inch 4K Smart TV (2024)", category:"tech", price:1099, was:1599, pct:31, score:71, in_stock:true, url:"https://www.amazon.co.uk/dp/B0CXXXXXX?tag=demo-21", added:nowMinus(9)},
+    {title:"PlayStation 5 Slim Disc Console + Extra Controller", category:"gaming", price:419.99, was:539.99, pct:22, score:63, in_stock:false, url:"https://www.amazon.co.uk/dp/B0CL5KNB9M?tag=demo-21", added:nowMinus(13)},
+    {title:"Shark Anti Hair Wrap Cordless Vacuum IZ400UKT", category:"home", price:199, was:429, pct:54, score:91, in_stock:true, url:"https://www.amazon.co.uk/dp/B08F2XXXXX?tag=demo-21", added:nowMinus(1)},
+    {title:"Philips Hue White & Colour Starter Kit (3 bulbs)", category:"home", price:89.99, was:134.99, pct:33, score:69, in_stock:true, url:"https://www.amazon.co.uk/dp/B0XXXXXXX1?tag=demo-21", added:nowMinus(20)},
+    {title:"Tommee Tippee Perfect Prep Day & Night Machine", category:"baby", price:69.99, was:99.99, pct:30, score:58, in_stock:true, url:"https://www.amazon.co.uk/dp/B0XXXXXXX2?tag=demo-21", added:nowMinus(28)},
+    {title:"Logitech MX Master 3S Wireless Mouse", category:"tech", price:74.99, was:109.99, pct:32, score:66, in_stock:true, url:"https://www.amazon.co.uk/dp/B0XXXXXXX3?tag=demo-21", added:nowMinus(34)}
+  ]};
+
+  if(P.get("demo") === "1"){ start(DEMO); return; }
+
+  fetch("/deals.json", {cache:"no-cache"})
+    .then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); })
+    .then(start)
+    .catch(fail);
+})();
+</script>
+</body>
+</html>

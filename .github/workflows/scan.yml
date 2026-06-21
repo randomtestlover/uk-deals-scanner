@@ -41,6 +41,27 @@ jobs:
           AWIN_FEED_URLS: ${{ secrets.AWIN_FEED_URLS }}
         run: python main.py
 
+      # Refresh the public deals snapshot the website serves (docs/deals.json).
+      # Best-effort: the script never fails the job, so a snapshot hiccup
+      # can't take down the scan.
+      - name: Export deals snapshot for the website
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: python -m tools.export_deals
+
+      - name: Commit deals snapshot (only when it changed)
+        run: |
+          git config user.name "deals-bot"
+          git config user.email "deals-bot@users.noreply.github.com"
+          git add docs/deals.json
+          if git diff --cached --quiet; then
+            echo "No deal changes to commit."
+          else
+            git commit -m "chore: update deals snapshot"
+            git push || (git pull --rebase --autostash && git push) || true
+          fi
+
       # GitHub disables scheduled workflows after 60 days of repo inactivity.
       # This harmless monthly touch keeps the schedule alive.
       - name: Keep-alive (1st of month only)

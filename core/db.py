@@ -7,6 +7,7 @@ code never touches the DB client directly.
 
 from __future__ import annotations
 
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from supabase import Client, create_client
@@ -142,3 +143,24 @@ class DB:
         self.client.table("posts").insert(
             {"deal_id": deal_id, "channel": channel, "message_id": message_id}
         ).execute()
+
+    # --- public website snapshot ---------------------------------------
+    def recent_deals(self, days: int = 30, max_rows: int = 2000) -> list[dict]:
+        """Recent deal rows for the public website snapshot (read-only).
+
+        Returns only the columns the static deals page needs, newest first,
+        bounded to the last `days` days. tools/export_deals.py turns these
+        into docs/deals.json so the browser never touches the database."""
+        cutoff = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
+        res = (
+            self.client.table("deals")
+            .select(
+                "title,category,url,affiliate_url,asin,current_price,"
+                "ref_price,pct_off,deal_score,in_stock,created_at"
+            )
+            .gte("created_at", cutoff)
+            .order("created_at", desc=True)
+            .limit(max_rows)
+            .execute()
+        )
+        return res.data or []
