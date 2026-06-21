@@ -70,3 +70,31 @@ scrape_fallback:
   user_agent: "Mozilla/5.0 (compatible; UKDealsScanner/1.0; +https://example.com/bot)"
   min_delay_seconds: 6
   max_delay_seconds: 14
+
+# --- Discount / voucher codes (optional, OFF by default) ----
+# Scrapes voucher codes from sources YOU configure and publishes them to the
+# website (docs/codes.html). Read this before enabling:
+#   * Only point this at sources you are permitted to use. Many voucher sites'
+#     Terms forbid scraping, and UK database right may apply to their listings.
+#   * robots.txt is fetched and obeyed per source (respect_robots). If a site
+#     disallows it, that source is skipped.
+#   * Many sites hide the real code behind a click/redirect, so a plain scrape
+#     may capture the offer text but not a usable code. Sources that print the
+#     code in the HTML (text or a data-* attribute) work best.
+voucher_sources:
+  enabled: false            # master switch — set true once a source is configured
+  respect_robots: true      # honour each site's robots.txt (leave this true)
+  sources:
+    # Example shape (disabled). Fill the selectors to match a permitted source.
+    - name: "Example"
+      enabled: false
+      list_url: "https://example.com/vouchers"
+      row_selector: ".voucher"            # CSS for each code block on the page
+      title_selector: ".voucher__title"   # the offer text
+      code_selector: ".voucher__code"     # element holding the code (optional)
+      code_attr: ""                       # read code from an attribute instead, e.g. "data-code"
+      merchant_selector: ".voucher__merchant"
+      merchant: ""                        # OR a fixed merchant if single-retailer
+      link_selector: "a"                  # link to the offer/merchant (optional)
+      expires_selector: ""                # element with an expiry date (optional)
+      category: "general"

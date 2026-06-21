@@ -78,3 +78,53 @@ class ScoredDeal(BaseModel):
     created_at: str = Field(
         default_factory=lambda: datetime.now(timezone.utc).isoformat()
     )
+
+
+class VoucherCode(BaseModel):
+    """A scraped voucher / discount code, validated before display.
+
+    `code` is optional: some offers are automatic ("no code needed"), in
+    which case it stays None and the page renders the offer without a code box.
+    """
+
+    source: str = Field(..., min_length=1)               # e.g. "scrape:MySource"
+    merchant: str = Field(..., min_length=1, max_length=120)
+    title: str = Field(..., min_length=2, max_length=300)
+    code: Optional[str] = Field(None, max_length=60)
+    category: str = "general"
+    url: Optional[str] = None
+    expires: Optional[str] = None                         # ISO date 'YYYY-MM-DD'
+
+    @field_validator("merchant", "title", "category")
+    @classmethod
+    def _clean(cls, v: str) -> str:
+        return re.sub(r"\s+", " ", v or "").strip()
+
+    @field_validator("code")
+    @classmethod
+    def _clean_code(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return None
+        v = re.sub(r"\s+", "", v).upper()
+        return v or None
+
+    @field_validator("url")
+    @classmethod
+    def _clean_url(cls, v: Optional[str]) -> Optional[str]:
+        if not v or not v.startswith(("http://", "https://")):
+            return None
+        return v
+
+    @field_validator("expires")
+    @classmethod
+    def _clean_expires(cls, v: Optional[str]) -> Optional[str]:
+        if not v:
+            return None
+        m = re.search(r"\d{4}-\d{2}-\d{2}", v)
+        return m.group(0) if m else None
+
+    @property
+    def dedupe_key(self) -> str:
+        """Stable identity: a merchant + (code, else offer title)."""
+        tail = (self.code or self.title or "").lower()
+        return f"{self.merchant.lower()}|{tail}"
