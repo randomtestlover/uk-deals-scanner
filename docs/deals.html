@@ -303,6 +303,61 @@
   }
   function titleCase(s){ return (s||"").replace(/\b\w/g, function(c){ return c.toUpperCase(); }); }
 
+  // --- product categorisation ---------------------------------------------
+  // The deal feed lumps everything into one "deals" bucket, so we derive a
+  // shopper-friendly category from each title by keyword. First match wins,
+  // so the list is ordered most-specific-device first.
+  var CAT_KEYWORDS = [
+    ["Laptops",            ["laptop","macbook","chromebook","notebook","thinkpad","ideapad","zenbook","vivobook","ultrabook"]],
+    ["Tablets",            ["ipad","galaxy tab","surface pro","surface go","kindle","e-reader","e reader","fire hd"]],
+    ["Phones",             ["smartphone","iphone","galaxy s","galaxy a","galaxy z","pixel","oneplus","sim free","sim-free","mobile phone"]],
+    ["Monitors",           ["monitor","ultrawide"]],
+    ["PCs & Components",   ["desktop","gaming pc","mini pc","imac","mac mini","mac studio","motherboard","graphics card","gpu","geforce","rtx","radeon","ryzen","intel core","processor","cpu","ssd","nvme","hard drive","hdd","ddr4","ddr5","power supply","psu","pc case","keyboard","mouse","webcam"]],
+    ["Gaming",             ["playstation","ps5","ps4","xbox","nintendo","steam deck","controller","gaming chair"]],
+    ["Audio",              ["headphone","earbud","earphone","airpods","soundbar","speaker","home cinema","hi-fi","hifi","headset"]],
+    ["TVs",                ["oled","qled","smart tv","television","tv"]],
+    ["Cameras",            ["camera","dslr","mirrorless","gopro","camcorder","drone"]],
+    ["Wearables",          ["smartwatch","smart watch","apple watch","galaxy watch","fitbit","garmin","fitness tracker"]],
+    ["Home & Kitchen",     ["air fryer","vacuum","kettle","coffee","espresso","microwave","washing machine","fridge","freezer","dishwasher","blender","toaster","cookware","mattress","duvet","bedding","hue","dyson"]],
+    ["Beauty & Grooming",  ["shaver","trimmer","hair dryer","straightener","toothbrush","skincare","perfume","fragrance","aftershave","makeup","epilator","airwrap"]],
+    ["Baby & Toddler",     ["baby","infant","toddler","pram","pushchair","nappies","nappy","car seat","cot","steriliser","sterilizer"]],
+    ["Toys & Games",       ["lego","toy","board game","jigsaw","puzzle","action figure","doll","playmobil"]]
+  ];
+  var CAT_ORDER = ["Laptops","Tablets","Phones","Monitors","PCs & Components","TVs","Audio","Gaming","Cameras","Wearables","Home & Kitchen","Beauty & Grooming","Baby & Toddler","Toys & Games","Other"];
+
+  // whole-word match for short/ambiguous tokens (tv, ps5, gpu…), substring for the rest
+  function hasKw(hay, kw){
+    if(kw.length >= 4 || kw.indexOf(" ") !== -1) return hay.indexOf(kw) !== -1;
+    var i = hay.indexOf(kw);
+    while(i !== -1){
+      var before = hay.charAt(i - 1), after = hay.charAt(i + kw.length) || " ";
+      if(!/[a-z0-9]/.test(before) && !/[a-z0-9]/.test(after)) return true;
+      i = hay.indexOf(kw, i + 1);
+    }
+    return false;
+  }
+  function classify(title){
+    var hay = " " + (title || "").toLowerCase() + " ";
+    for(var i = 0; i < CAT_KEYWORDS.length; i++){
+      var kws = CAT_KEYWORDS[i][1];
+      for(var j = 0; j < kws.length; j++){ if(hasKw(hay, kws[j])) return CAT_KEYWORDS[i][0]; }
+    }
+    // bare "tablet" is ambiguous (dishwasher / vitamin tablets) — only treat it
+    // as a device when there's no consumable context and nothing matched above
+    if(hay.indexOf("tablet") !== -1 &&
+       !/(dishwasher|washing|laundry|detergent|vitamin|supplement|descal|cleaning|rinse|effervescent|capsule)/.test(hay)) return "Tablets";
+    return null;
+  }
+  function catOf(d){              // memoised onto the deal so we classify once
+    if(d._cat) return d._cat;
+    var c = classify(d.title);
+    if(!c){
+      var raw = (d.category || "").trim();
+      c = (raw && !/^(deals?|general|misc|other|uncategor)/i.test(raw)) ? titleCase(raw) : "Other";
+    }
+    return (d._cat = c);
+  }
+
   // --- state, hydrated from the URL so views are shareable ---
   var P = new URLSearchParams(location.search);
   var state = {
@@ -335,7 +390,7 @@
   function card(d){
     var tr = tier(d.score), url = safeUrl(d.url);
     var top = h("div", {class:"card-top"},
-      h("span", {class:"cat", text: titleCase(d.category)}),
+      h("span", {class:"cat", text: catOf(d)}),
       h("span", {class:"badge " + tr, text: TIER_LABEL[tr] + " · " + d.score})
     );
     var price = h("div", {class:"card-price"}, h("span", {class:"now", text: gbp(d.price)}));
@@ -360,7 +415,7 @@
     var mn = parseFloat(state.min), mx = parseFloat(state.max);
     return ALL.filter(function(d){
       if(q && (d.title || "").toLowerCase().indexOf(q) === -1) return false;
-      if(state.cat !== "all" && d.category !== state.cat) return false;
+      if(state.cat !== "all" && catOf(d) !== state.cat) return false;
       if(state.off && (d.pct || 0) < state.off) return false;
       if(!isNaN(mn) && d.price < mn) return false;
       if(!isNaN(mx) && d.price > mx) return false;
@@ -376,7 +431,7 @@
     "new":      function(a,b){ return (Date.parse(b.added)||0) - (Date.parse(a.added)||0); }
   };
   function groupKey(d){
-    if(state.group === "category") return titleCase(d.category);
+    if(state.group === "category") return catOf(d);
     if(state.group === "tier")     return TIER_LABEL[tier(d.score)];
     if(state.group === "discount"){
       var p = d.pct || 0;
@@ -446,8 +501,11 @@
   function buildCatChips(){
     var box = document.getElementById("cats");
     var cats = {};
-    ALL.forEach(function(d){ cats[d.category] = (cats[d.category] || 0) + 1; });
-    var names = Object.keys(cats).sort();
+    ALL.forEach(function(d){ var c = catOf(d); cats[c] = (cats[c] || 0) + 1; });
+    var names = Object.keys(cats).sort(function(a, b){
+      var ia = CAT_ORDER.indexOf(a), ib = CAT_ORDER.indexOf(b);
+      return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib) || a.localeCompare(b);
+    });
     function mk(value, label){
       var b = h("button", {class:"chip" + (state.cat === value ? " on" : ""), "data-cat":value, text:label});
       b.addEventListener("click", function(){
@@ -457,8 +515,11 @@
       });
       return b;
     }
-    box.appendChild(mk("all", "All"));
-    names.forEach(function(n){ box.appendChild(mk(n, titleCase(n))); });
+    box.querySelectorAll(".chip").forEach(function(c){ c.remove(); });   // keep only the label
+    // hide the selected category if it no longer exists in the data
+    if(state.cat !== "all" && !cats[state.cat]) state.cat = "all";
+    box.appendChild(mk("all", "All (" + ALL.length + ")"));
+    names.forEach(function(n){ box.appendChild(mk(n, n + " (" + cats[n] + ")")); });
   }
 
   function bind(){
@@ -522,7 +583,7 @@
       };
       var u = safeUrl(d.url); if(u) offer.url = u;
       return {"@type":"ListItem","position": i+1,
-              "item": {"@type":"Product","name": d.title || "Deal", "category": d.category, "offers": offer}};
+              "item": {"@type":"Product","name": d.title || "Deal", "category": catOf(d), "offers": offer}};
     });
     var ld = {"@context":"https://schema.org","@type":"ItemList","name":"UK deals — YourDealsUK","itemListElement": items};
     var s = document.createElement("script");
@@ -553,15 +614,19 @@
 
   // --- sample data (demo mode only): preview the layout via deals.html?demo=1 ---
   function nowMinus(hrs){ return new Date(Date.now() - hrs*3600*1000).toISOString(); }
-  var DEMO = { generated_at: new Date().toISOString(), count: 8, deals: [
-    {title:"Sony WH-1000XM5 Wireless Noise-Cancelling Headphones", category:"tech", price:219, was:379, pct:42, score:88, in_stock:true, url:"https://www.amazon.co.uk/dp/B09XS7JWHH?tag=demo-21", added:nowMinus(2)},
-    {title:"Ninja Foodi 7.6L Dual Zone Air Fryer AF400UK", category:"kitchen", price:149.99, was:219.99, pct:32, score:74, in_stock:true, url:"https://www.amazon.co.uk/dp/B08C5KFkk?tag=demo-21", added:nowMinus(5)},
-    {title:"LG OLED55C4 55-inch 4K Smart TV (2024)", category:"tech", price:1099, was:1599, pct:31, score:71, in_stock:true, url:"https://www.amazon.co.uk/dp/B0CXXXXXX?tag=demo-21", added:nowMinus(9)},
-    {title:"PlayStation 5 Slim Disc Console + Extra Controller", category:"gaming", price:419.99, was:539.99, pct:22, score:63, in_stock:false, url:"https://www.amazon.co.uk/dp/B0CL5KNB9M?tag=demo-21", added:nowMinus(13)},
-    {title:"Shark Anti Hair Wrap Cordless Vacuum IZ400UKT", category:"home", price:199, was:429, pct:54, score:91, in_stock:true, url:"https://www.amazon.co.uk/dp/B08F2XXXXX?tag=demo-21", added:nowMinus(1)},
-    {title:"Philips Hue White & Colour Starter Kit (3 bulbs)", category:"home", price:89.99, was:134.99, pct:33, score:69, in_stock:true, url:"https://www.amazon.co.uk/dp/B0XXXXXXX1?tag=demo-21", added:nowMinus(20)},
-    {title:"Tommee Tippee Perfect Prep Day & Night Machine", category:"baby", price:69.99, was:99.99, pct:30, score:58, in_stock:true, url:"https://www.amazon.co.uk/dp/B0XXXXXXX2?tag=demo-21", added:nowMinus(28)},
-    {title:"Logitech MX Master 3S Wireless Mouse", category:"tech", price:74.99, was:109.99, pct:32, score:66, in_stock:true, url:"https://www.amazon.co.uk/dp/B0XXXXXXX3?tag=demo-21", added:nowMinus(34)}
+  var DEMO = { generated_at: new Date().toISOString(), count: 12, deals: [
+    {title:"Apple MacBook Air 13\" M3 (16GB RAM, 256GB SSD)", category:"deals", price:899, was:1099, pct:18, score:82, in_stock:true, url:"https://www.amazon.co.uk/dp/B0DEMO0001?tag=demo-21", added:nowMinus(1)},
+    {title:"Apple iPad 10.9\" (10th Gen, 64GB, Wi-Fi)", category:"deals", price:299, was:399, pct:25, score:79, in_stock:true, url:"https://www.amazon.co.uk/dp/B0DEMO0002?tag=demo-21", added:nowMinus(3)},
+    {title:"Samsung Galaxy S24 5G SIM-Free Smartphone (128GB)", category:"deals", price:599, was:799, pct:25, score:77, in_stock:true, url:"https://www.amazon.co.uk/dp/B0DEMO0003?tag=demo-21", added:nowMinus(4)},
+    {title:"ASUS TUF 27\" 165Hz Gaming Monitor (1440p)", category:"deals", price:199, was:279, pct:29, score:73, in_stock:true, url:"https://www.amazon.co.uk/dp/B0DEMO0004?tag=demo-21", added:nowMinus(6)},
+    {title:"Samsung 990 PRO 2TB NVMe PCIe 4.0 SSD", category:"deals", price:129, was:199, pct:35, score:81, in_stock:true, url:"https://www.amazon.co.uk/dp/B0DEMO0005?tag=demo-21", added:nowMinus(7)},
+    {title:"LG OLED55C4 55\" 4K Smart TV (2024)", category:"deals", price:1099, was:1599, pct:31, score:84, in_stock:true, url:"https://www.amazon.co.uk/dp/B0DEMO0006?tag=demo-21", added:nowMinus(8)},
+    {title:"Sony WH-1000XM5 Wireless Noise-Cancelling Headphones", category:"deals", price:219, was:379, pct:42, score:88, in_stock:true, url:"https://www.amazon.co.uk/dp/B0DEMO0007?tag=demo-21", added:nowMinus(2)},
+    {title:"PlayStation 5 Slim Disc Console + Extra Controller", category:"deals", price:419.99, was:539.99, pct:22, score:64, in_stock:false, url:"https://www.amazon.co.uk/dp/B0DEMO0008?tag=demo-21", added:nowMinus(13)},
+    {title:"Ninja Foodi 7.6L Dual Zone Air Fryer AF400UK", category:"deals", price:149.99, was:219.99, pct:32, score:74, in_stock:true, url:"https://www.amazon.co.uk/dp/B0DEMO0009?tag=demo-21", added:nowMinus(5)},
+    {title:"Shark Anti Hair Wrap Cordless Vacuum IZ400UKT", category:"deals", price:199, was:429, pct:54, score:91, in_stock:true, url:"https://www.amazon.co.uk/dp/B0DEMO0010?tag=demo-21", added:nowMinus(9)},
+    {title:"Apple Watch Series 9 GPS 45mm Smartwatch", category:"deals", price:329, was:429, pct:23, score:70, in_stock:true, url:"https://www.amazon.co.uk/dp/B0DEMO0011?tag=demo-21", added:nowMinus(16)},
+    {title:"LEGO Icons Orchid Botanical Building Set", category:"deals", price:34.99, was:49.99, pct:30, score:67, in_stock:true, url:"https://www.amazon.co.uk/dp/B0DEMO0012?tag=demo-21", added:nowMinus(28)}
   ]};
 
   if(P.get("demo") === "1"){ start(DEMO); return; }
